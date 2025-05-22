@@ -1,0 +1,175 @@
+import React from "react";
+import { Calendar, Users, Wallet, DollarSign, Award, Map, Tag, Target } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Event } from "@/types/event";
+import { formatDate, formatCurrency, getEventTypeLabel } from "@/lib/utils";
+
+interface EventDetailsProps {
+  event: Event;
+}
+
+export function EventDetails({ event }: EventDetailsProps) {
+  const getBadgeVariant = (type: string) => {
+    switch(type) {
+      case 'in-person': return 'primary';
+      case 'virtual': return 'secondary';
+      case 'hybrid': return 'accent';
+      default: return 'outline';
+    }
+  };
+  
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <CardTitle className="text-text">Event details</CardTitle>
+            <Badge variant={getBadgeVariant(event.type)}>
+              {getEventTypeLabel(event.type)}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center text-textSecondary">
+              <Calendar className="w-4 h-4 mr-2" />
+              <span>{formatDate(event.date)}</span>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium text-textSecondary">Description</h3>
+              <p className="mt-1 text-text">{event.description}</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-textSecondary">Created by</h3>
+                <p className="mt-1 text-text">
+                  {typeof event.creator === 'string' ? 'User' : (event.creator as { name: string }).name}
+                </p>
+              </div>
+              
+              {event.marketing && (
+                <div>
+                  <h3 className="text-sm font-medium text-textSecondary">Marketing campaign</h3>
+                  <p className="mt-1 text-text">{event.marketing.campaign}</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="flex items-center text-textSecondary mb-2">
+                  <Target className="w-4 h-4 mr-2" />
+                  <h3 className="text-sm font-medium">Objectives</h3>
+                </div>
+                {event.objectives && event.objectives.length > 0 ? (
+                  <ul className="mt-1 list-disc list-inside space-y-1">
+                    {event.objectives.map((objective, index) => (
+                      <li key={index} className="text-sm text-text">{objective}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-1 text-textSecondary/70 text-sm">No objectives defined</p>
+                )}
+              </div>
+              
+              <div className="flex-1">
+                <div className="flex items-center text-textSecondary mb-2">
+                  <Tag className="w-4 h-4 mr-2" />
+                  <h3 className="text-sm font-medium">KPIs</h3>
+                </div>
+                {event.kpis && event.kpis.length > 0 ? (
+                  <ul className="mt-1 list-disc list-inside space-y-1">
+                    {event.kpis.map((kpi, index) => (
+                      <li key={index} className="text-sm text-text">{kpi}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-1 text-textSecondary/70 text-sm">No KPIs defined</p>
+                )}
+              </div>
+            </div>
+            
+            {event.specialGuests && event.specialGuests.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-textSecondary mb-2">Special guests</h3>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {event.specialGuests.map((guest, index) => (
+                    <Badge key={index} variant="secondary">
+                      {guest}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {event.marketing && event.marketing.channels && (
+              <div>
+                <h3 className="text-sm font-medium text-textSecondary mb-2">Marketing channels</h3>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {event.marketing.channels.map((channel, index) => (
+                    <Badge key={index} variant="outline">
+                      {channel}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+      
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center">
+              <div className="mb-2 p-3 bg-secondary/10 rounded-full">
+                <Users className="w-6 h-6 text-secondary" />
+              </div>
+              <div className="text-2xl font-bold text-text">{event.confirmedAttendees}</div>
+              <p className="text-sm text-textSecondary">Attendees</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center">
+              <div className="mb-2 p-3 bg-accent/10 rounded-full">
+                <Wallet className="w-6 h-6 text-accent" />
+              </div>
+              <div className="text-2xl font-bold text-text">{event.newWallets}</div>
+              <p className="text-sm text-textSecondary">Created wallets</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center">
+              <div className="mb-2 p-3 bg-primary/10 rounded-full">
+                <Award className="w-6 h-6 text-primary" />
+              </div>
+              <div className="text-2xl font-bold text-text">{event.attendeesWithCertificate || 0}</div>
+              <p className="text-sm text-textSecondary">Certificates</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center">
+              <div className="mb-2 p-3 bg-success/10 rounded-full">
+                <DollarSign className="w-6 h-6 text-success" />
+              </div>
+              <div className="text-2xl font-bold text-text">{formatCurrency(event.totalCost || 0)}</div>
+              <p className="text-sm text-textSecondary">Total cost</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
