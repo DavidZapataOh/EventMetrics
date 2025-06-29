@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^1.16.8",
+    "@types/web3": "^1.0.20",
+    "aws-sdk": "^2.1692.0",
     "axios": "^1.8.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -22,6 +25,8 @@
     "react-query": "^3.39.3",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",
+    "web3": "^4.16.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.3",
     "zustand": "^5.0.3"
   },
@@ -29,6 +34,7 @@
     "@eslint/eslintrc": "^3",
     "@hookform/resolvers": "^5.0.1",
     "@tailwindcss/postcss": "^4.1.4",
+    "@types/google.maps": "^3.58.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

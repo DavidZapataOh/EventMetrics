@@ -20,15 +20,38 @@ export interface VirtualMetrics {
     connectionTime: number;
     other?: Record<string, any>;
 }
+
+export interface EventLogo {
+    key: string;
+    originalName: string;
+    size: number;
+    uploadedAt: string;
+}
+
+export interface EventLocation {
+    address: string;
+    city: string;
+    country: string;
+    coordinates: {
+        lat: number;
+        lng: number;
+    };
+    placeId?: string;
+}
   
 export interface Event {
     _id: string;
     name: string;
     description: string;
     date: string;
+    startTime: string;
+    endTime: string;
+    timezone: string;
     type: 'in-person' | 'virtual' | 'hybrid';
+    location?: EventLocation;
     creator: string;
-    logo: string;
+    logo?: EventLogo;
+    logoUrl?: string;
     objectives: string[];
     kpis: string[];
     registeredAttendees: Attendee[];
@@ -53,8 +76,21 @@ export interface EventFormData {
     name: string;
     description: string;
     date: string;
+    startTime: string;
+    endTime: string;
+    timezone: string;
     type: 'in-person' | 'virtual' | 'hybrid';
-    logo?: string;
+    location?: {
+        address: string;
+        city?: string;
+        country?: string;
+        coordinates?: {
+            lat: number;
+            lng: number;
+        };
+        placeId?: string;
+    };
+    logo?: File;
     objectives: string[];
     kpis: string[];
     registeredAttendees?: Attendee[];

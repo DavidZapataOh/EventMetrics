@@ -14,11 +14,17 @@ import {
 import { Event, EventFormData } from '@/types/event';
 import { QueryParams } from '@/types/api';
 
-export function useEvents() {
+interface UseEventsProps {
+  initialParams?: QueryParams;
+}
+
+export function useEvents(initialParams?: QueryParams) {
   const queryClient = useQueryClient();
   const [queryParams, setQueryParams] = useState<QueryParams>({
     page: 1,
     limit: 10,
+    sort: '-createdAt',
+    ...initialParams
   });
 
   const eventsQuery = useQuery(
@@ -26,6 +32,8 @@ export function useEvents() {
     () => getEvents(queryParams),
     {
       keepPreviousData: true,
+      staleTime: 5 * 60 * 1000, // 5 minutos
+      cacheTime: 10 * 60 * 1000, // 10 minutos
     }
   );
 
@@ -34,18 +42,26 @@ export function useEvents() {
     () => getEvent(id),
     {
       enabled: !!id,
+      staleTime: 5 * 60 * 1000,
+      retry: (failureCount, error: any) => {
+        // No reintentar si es un error 404
+        if (error?.response?.status === 404) return false;
+        return failureCount < 3;
+      }
     }
   );
 
   const createEventMutation = useMutation(
     (data: EventFormData) => createEvent(data),
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries('events');
-        toast.success('Event created successfully');
+      onSuccess: (newEvent) => {
+        queryClient.invalidateQueries(['events']);
+        queryClient.setQueryData(['event', newEvent._id], newEvent);
+        toast.success('Evento creado exitosamente');
       },
       onError: (error: any) => {
-        toast.error(error.response?.data?.message || 'Error to create the event');
+        const message = error.response?.data?.message || 'Error al crear el evento';
+        toast.error(message);
       },
     }
   );
@@ -53,13 +69,14 @@ export function useEvents() {
   const updateEventMutation = useMutation(
     ({ id, data }: { id: string; data: Partial<EventFormData> }) => updateEvent(id, data),
     {
-      onSuccess: (_, variables) => {
+      onSuccess: (updatedEvent, variables) => {
         queryClient.invalidateQueries(['events']);
-        queryClient.invalidateQueries(['event', variables.id]);
-        toast.success('Event updated successfully');
+        queryClient.setQueryData(['event', variables.id], updatedEvent);
+        toast.success('Evento actualizado exitosamente');
       },
       onError: (error: any) => {
-        toast.error(error.response?.data?.message || 'Error to update the event');
+        const message = error.response?.data?.message || 'Error al actualizar el evento';
+        toast.error(message);
       },
     }
   );
@@ -67,12 +84,14 @@ export function useEvents() {
   const deleteEventMutation = useMutation(
     (id: string) => deleteEvent(id),
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries('events');
-        toast.success('Event deleted successfully');
+      onSuccess: (_, deletedId) => {
+        queryClient.invalidateQueries(['events']);
+        queryClient.removeQueries(['event', deletedId]);
+        toast.success('Evento eliminado exitosamente');
       },
       onError: (error: any) => {
-        toast.error(error.response?.data?.message || 'Error to delete the event');
+        const message = error.response?.data?.message || 'Error al eliminar el evento';
+        toast.error(message);
       },
     }
   );
@@ -80,29 +99,55 @@ export function useEvents() {
   const importEventDataMutation = useMutation(
     ({ id, file }: { id: string; file: File }) => importEventData(id, file),
     {
-      onSuccess: (_, variables) => {
-        queryClient.invalidateQueries(['event', variables.id]);
-        toast.success('Data imported successfully');
+      onSuccess: (updatedEvent, variables) => {
+        queryClient.invalidateQueries(['events']);
+        queryClient.setQueryData(['event', variables.id], updatedEvent);
+        toast.success('Datos importados exitosamente');
       },
       onError: (error: any) => {
-        toast.error(error.response?.data?.message || 'Error to import the data');
+        const message = error.response?.data?.message || 'Error al importar los datos';
+        toast.error(message);
       },
     }
   );
 
+  const refetchEvents = () => {
+    return eventsQuery.refetch();
+  };
+
+  const refetchEvent = (id: string) => {
+    return queryClient.invalidateQueries(['event', id]);
+  };
+
   return {
+    // Data
     events: eventsQuery.data?.data || [],
     eventsQuery,
     eventQuery,
-    createEvent: createEventMutation.mutateAsync,
-    updateEvent: updateEventMutation.mutateAsync,
-    deleteEvent: deleteEventMutation.mutateAsync,
-    importEventData: importEventDataMutation.mutateAsync,
+    
+    // Pagination
     pagination: {
       currentPage: eventsQuery.data?.page || 1,
       totalPages: eventsQuery.data?.totalPages || 1,
       totalEvents: eventsQuery.data?.total || 0,
+      limit: eventsQuery.data?.limit || 10,
     },
+    
+    // Mutations
+    createEvent: createEventMutation.mutateAsync,
+    updateEvent: updateEventMutation.mutateAsync,
+    deleteEvent: deleteEventMutation.mutateAsync,
+    importEventData: importEventDataMutation.mutateAsync,
+    
+    // Loading states
+    isCreating: createEventMutation.isLoading,
+    isUpdating: updateEventMutation.isLoading,
+    isDeleting: deleteEventMutation.isLoading,
+    isImporting: importEventDataMutation.isLoading,
+    
+    // Utils
     setQueryParams,
+    refetchEvents,
+    refetchEvent,
   };
 }

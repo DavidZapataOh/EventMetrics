@@ -8,11 +8,13 @@ import { EventForm } from "@/components/events/event-form";
 import { useEvents } from "@/lib/hooks/use-events";
 import { EventFormData } from "@/types/event";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-export default function EditEventPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
   const router = useRouter();
-  const { eventQuery, updateEvent } = useEvents();
+  const { eventQuery, updateEvent, isUpdating } = useEvents();
   const { data: event, isLoading, isError } = eventQuery(id);
 
   const handleSubmit = async (data: EventFormData) => {
@@ -22,6 +24,10 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
     } catch (error) {
       console.error("Error updating event:", error);
     }
+  };
+
+  const handleCancel = () => {
+    router.push(`/events/${id}`);
   };
 
   if (isLoading) {
@@ -34,30 +40,70 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
 
   if (isError || !event) {
     return (
-      <div className="text-center py-10">
-        <h2 className="text-xl font-semibold text-error">Error loading event</h2>
-        <p className="text-textSecondary mt-2">Could not load event data. Please try again.</p>
+      <div className="flex flex-col items-center justify-center h-[80vh]">
+        <h2 className="text-xl font-semibold text-error mb-4">Error al cargar el evento</h2>
+        <p className="text-textSecondary mb-6">No se pudieron cargar los datos del evento. Por favor intenta nuevamente.</p>
+        <div className="flex space-x-3">
+          <Link href={`/events/${id}`}>
+            <Button variant="outline">Volver al Evento</Button>
+          </Link>
+          <Link href="/events">
+            <Button>Volver a Eventos</Button>
+          </Link>
+        </div>
       </div>
     );
   }
+
+  // Preparar los datos del evento para el formulario
+  const defaultValues: Partial<EventFormData> = {
+    name: event.name,
+    description: event.description,
+    date: new Date(event.date).toISOString().split('T')[0], // Convertir a formato YYYY-MM-DD
+    type: event.type,
+    logo: event.logo,
+    objectives: event.objectives || [],
+    kpis: event.kpis || [],
+    // Agregar otros campos si existen
+    confirmedAttendees: event.confirmedAttendees,
+    totalAttendees: event.totalAttendees,
+    attendeesWithCertificate: event.attendeesWithCertificate,
+    previosEventAttendees: event.previosEventAttendees,
+    newWallets: event.newWallets,
+    transactionsAfterEvent: event.transactionsAfterEvent,
+    totalCost: event.totalCost,
+    budgetSurplusDeficit: event.budgetSurplusDeficit,
+    marketing: event.marketing,
+    virtualMetrics: event.virtualMetrics,
+    registeredAttendees: event.registeredAttendees,
+    specialGuests: event.specialGuests,
+    openedWalletAddresses: event.openedWalletAddresses,
+    transactionsDuringEvent: event.transactionsDuringEvent
+  };
 
   return (
     <div className="space-y-6">
       <Breadcrumbs
         items={[
           { label: "Dashboard", href: "/dashboard" },
-          { label: "Events", href: "/events" },
+          { label: "Eventos", href: "/events" },
           { label: event.name, href: `/events/${id}` },
-          { label: "Edit", href: `/events/${id}/edit` },
+          { label: "Editar", href: `/events/${id}/edit` },
         ]}
       />
       
       <PageHeader
-        title={`Edit ${event.name}`}
-        description="Update event details and information"
+        title={`Editar ${event.name}`}
+        subtitle="Actualiza los detalles e información del evento"
       />
       
-      <EventForm onSubmit={handleSubmit} event={event} />
+      <EventForm 
+        defaultValues={defaultValues}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isLoading={isUpdating}
+        mode="edit"
+      />
     </div>
   );
 }

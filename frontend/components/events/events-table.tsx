@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { 
   Calendar, 
   Users, 
@@ -11,7 +12,9 @@ import {
   Edit,
   Trash,
   FileText,
-  ExternalLink
+  ExternalLink,
+  ImageIcon,
+  Clock
 } from "lucide-react";
 import { 
   Table, 
@@ -56,7 +59,7 @@ export function EventsTable({ events, onDelete, isLoading = false }: EventsTable
           <TableHeader>
             <TableRow>
               <TableHead>Event</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead>Date & Time</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Attendees</TableHead>
               <TableHead>Wallets</TableHead>
@@ -91,18 +94,46 @@ export function EventsTable({ events, onDelete, isLoading = false }: EventsTable
                 <TableRow key={event._id} className="group">
                   <TableCell>
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-element flex items-center justify-center">
-                        <Calendar className="w-5 h-5 text-primary" />
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-element flex items-center justify-center flex-shrink-0">
+                        {event.logoUrl ? (
+                          <Image
+                            src={event.logoUrl}
+                            alt={`${event.name} logo`}
+                            width={48}
+                            height={48}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Fallback si la imagen no carga
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : (
+                          <ImageIcon className="w-6 h-6 text-textSecondary" />
+                        )}
+                        <Calendar className="w-5 h-5 text-primary hidden" />
                       </div>
-                      <div>
-                        <div className="font-medium">{event.name}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium truncate">{event.name}</div>
                         <div className="text-sm text-textSecondary truncate max-w-[200px]">
                           {event.description}
                         </div>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{formatDate(event.date)}</TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex items-center text-sm">
+                        <Calendar className="w-3 h-3 mr-1 text-textSecondary" />
+                        {formatDate(event.date)}
+                      </div>
+                      <div className="flex items-center text-xs text-textSecondary">
+                        <Clock className="w-3 h-3 mr-1" />
+                        {formatDate(event.startTime)} - {formatDate(event.endTime)}
+                      </div>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={
                       event.type === 'in-person' ? 'primary' : 

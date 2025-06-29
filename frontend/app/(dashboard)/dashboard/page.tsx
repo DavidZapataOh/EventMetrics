@@ -13,8 +13,16 @@ import { useAnalytics } from "@/lib/hooks/use-analytics";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function DashboardPage() {
-  const { events, eventsQuery } = useEvents();
+  const { events, eventsQuery } = useEvents({
+    page: 1, 
+    limit: 5,
+    sort: "-createdAt"
+  });
   const { overallMetricsQuery } = useAnalytics();
+
+  console.log("Estado de carga:", eventsQuery.isLoading);
+  console.log("Estado de error:", eventsQuery.isError);
+  console.log("Error:", eventsQuery.error);
 
   const isLoading = eventsQuery.isLoading || overallMetricsQuery.isLoading;
 
@@ -22,6 +30,14 @@ export default function DashboardPage() {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (eventsQuery.isError) {
+    return (
+      <div className="p-4 border border-error rounded-md">
+        <p className="text-error">Error al cargar los eventos. Intente nuevamente.</p>
       </div>
     );
   }
@@ -62,7 +78,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader 
         title="Dashboard" 
-        description="General performance view of your events"
+        subtitle="General performance view of your events"
       />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -119,7 +135,7 @@ export default function DashboardPage() {
       <div>
         <h2 className="text-xl font-semibold mb-4">Recent Events</h2>
         <EventsTable 
-          events={events.slice(0, 5)} 
+          events={events} 
           isLoading={eventsQuery.isLoading}
           onDelete={(id) => {
             // implemented in the component
