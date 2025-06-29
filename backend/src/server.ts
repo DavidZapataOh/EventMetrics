@@ -4,7 +4,6 @@ import mongoose from 'mongoose'
 import cors from 'cors'
 import 'dotenv/config'
 import connectDB from './config/db'
-import fileUpload from 'express-fileupload'
 import path from 'path'
 import configureSecurityMiddleware from './middleware/securityMiddleware'
 import authRoutes from './routes/api/auth'
@@ -12,6 +11,7 @@ import eventRoutes from './routes/api/events'
 import userRoutes from './routes/api/users'
 import analyticsRoutes from './routes/api/analytics'
 import web3Routes from './routes/api/web3'
+import walletsRoutes from './routes/api/wallets'
 
 configureSecurityMiddleware(app)
 
@@ -38,9 +38,6 @@ app.use(cors({
 }))
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
-app.use(fileUpload({
-    createParentPath: true
-}))
 
 const initializeServer = async () => {
     try {
@@ -50,6 +47,7 @@ const initializeServer = async () => {
         app.use('/api/users', userRoutes)
         app.use('/api/analytics', analyticsRoutes)
         app.use('/api/web3', web3Routes)
+        app.use('/api/wallets', walletsRoutes)
     } catch (error) {
         console.log(error)
         process.exit(1)

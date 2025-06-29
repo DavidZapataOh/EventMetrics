@@ -4,9 +4,27 @@ interface IEvent {
     name: string
     description: string
     date: Date
+    startTime: string // Nueva: hora de inicio (HH:MM)
+    endTime: string   // Nueva: hora de fin (HH:MM)
+    timezone: string  // Nueva: zona horaria
     type: string
+    location: {       // Nueva: información de ubicación
+        address: string
+        city: string
+        country: string
+        coordinates: {
+            lat: number
+            lng: number
+        }
+        placeId?: string // Google Places ID
+    }
     creator: string
-    logo: string
+    logo: {
+        key: string // Clave del archivo en S3
+        originalName: string // Nombre original del archivo
+        size: number // Tamaño en bytes
+        uploadedAt: Date
+    }
     objectives: string[]
     kpis: string[]
     registeredAttendees: {
@@ -48,14 +66,59 @@ const eventSchema = new Schema({
         required: true,
         trim: true
     },
+    description: {
+        type: String,
+        required: true,
+        trim: true
+    },
     date: {
         type: Date,
         required: true
+    },
+    startTime: {
+        type: String,
+        required: true,
+        match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ // Formato HH:MM
+    },
+    endTime: {
+        type: String,
+        required: true,
+        match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ // Formato HH:MM
+    },
+    timezone: {
+        type: String,
+        required: true,
+        default: 'America/Bogota'
     },
     type: {
         type: String,
         enum: ['in-person', 'virtual', 'hybrid'],
         required: true
+    },
+    location: {
+        address: {
+            type: String,
+            required: function() {
+                return this.type === 'in-person' || this.type === 'hybrid';
+            }
+        },
+        city: String,
+        country: String,
+        coordinates: {
+            lat: {
+                type: Number,
+                required: function() {
+                    return this.type === 'in-person' || this.type === 'hybrid';
+                }
+            },
+            lng: {
+                type: Number,
+                required: function() {
+                    return this.type === 'in-person' || this.type === 'hybrid';
+                }
+            }
+        },
+        placeId: String
     },
     creator: {
         type: Schema.Types.ObjectId,
@@ -63,7 +126,13 @@ const eventSchema = new Schema({
         required: true
     },
     logo: {
-        type: String,
+        key: String, // Clave del archivo en S3
+        originalName: String, // Nombre original
+        size: Number, // Tamaño en bytes
+        uploadedAt: {
+            type: Date,
+            default: Date.now
+        }
     },
     objectives: {
         type: [String],
@@ -109,6 +178,18 @@ const eventSchema = new Schema({
         default: Date.now
     }
 })
+
+// Middleware para validar ubicación según el tipo
+eventSchema.pre('save', function(next) {
+    this.updatedAt = new Date();
+    
+    // Si es evento virtual, remover ubicación
+    if (this.type === 'virtual') {
+        this.location = undefined;
+    }
+    
+    next();
+});
 
 const Event = mongoose.model<IEvent>('Event', eventSchema)
 export default Event

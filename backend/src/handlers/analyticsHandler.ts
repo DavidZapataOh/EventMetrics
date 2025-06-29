@@ -2,43 +2,63 @@ import Event from '../models/Events';
 
 const getOverallMetrics = async (req: any, res: any) => {
     try {
-        const totalEvents = await Event.countDocuments();
+        // Filtrar eventos por el usuario autenticado
+        const userFilter = { creator: req.user._id };
+
+        const totalEvents = await Event.countDocuments(userFilter);
 
         const eventByType = await Event.aggregate([
+            { $match: userFilter },
             { $group: { _id: '$type', count: { $sum: 1 } } },
         ]);
 
         const totalAttendees = await Event.aggregate([
+            { $match: userFilter },
             { $group: { _id: null, total: { $sum: "$confirmedAttendees" } } },
         ]);
 
         const totalNewWallets = await Event.aggregate([
+            { $match: userFilter },
             { $group: { _id: null, total: { $sum: "$newWallets" } } },
         ]);
 
         const totalCosts = await Event.aggregate([
+            { $match: userFilter },
             { $group: { _id: null, total: { $sum: "$totalCost" } } },
         ]);
         
-        res.json({
-            totalEvents,
-            eventByType,
-            totalAttendees: totalAttendees[0]?.total || 0,
-            totalNewWallets: totalNewWallets[0]?.total || 0,
-            totalCosts: totalCosts[0]?.total || 0,
+        // Devolver en el formato esperado por el frontend
+        res.status(200).json({
+            success: true,
+            data: {
+                totalEvents,
+                eventByType,
+                totalAttendees: totalAttendees[0]?.total || 0,
+                totalNewWallets: totalNewWallets[0]?.total || 0,
+                totalCosts: totalCosts[0]?.total || 0,
+            }
         });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching overall metrics' });
+        console.error('Error fetching overall metrics:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error fetching overall metrics',
+            error: (error as Error).message 
+        });
     }
 }
 
 const getUserMetrics = async (req: any, res: any) => {
     try {
+        // Solo métricas del usuario autenticado
+        const userFilter = { creator: req.user._id };
+
         const userMetrics = await Event.aggregate([
+            { $match: userFilter },
             {
                 $lookup: {
                     from: 'users',
-                    localField: 'userId',
+                    localField: 'creator',
                     foreignField: '_id',
                     as: 'creatorInfo',
                 },
@@ -66,42 +86,61 @@ const getUserMetrics = async (req: any, res: any) => {
             { $sort: { totalAttendees: -1 } },
         ]);
 
-        res.json(userMetrics);
+        res.status(200).json({
+            success: true,
+            data: userMetrics
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching user metrics' });
+        console.error('Error fetching user metrics:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error fetching user metrics',
+            error: (error as Error).message 
+        });
     }
 }
 
 const getTimelineMetrics = async (req: any, res: any) => {
     try {
         const { startDate, endDate } = req.query;
-
-        const query = {} as any;
+        const userFilter = { creator: req.user._id } as any;
 
         if (startDate && endDate) {
-            query.date = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate),
+            userFilter.date = {
+                $gte: new Date(startDate as string),
+                $lte: new Date(endDate as string),
             };
         }
 
-        const events = await Event.find(query)
+        const events = await Event.find(userFilter)
             .sort({ date: 1 })
             .select('date totalCost confirmedAttendees newWallets');
 
-        res.json(events);
+        res.status(200).json({
+            success: true,
+            data: events
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching timeline metrics' });
+        console.error('Error fetching timeline metrics:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error fetching timeline metrics',
+            error: (error as Error).message 
+        });
     }
 }
 
 const getRegionMetrics = async (req: any, res: any) => {
     try {
+        // Para métricas de región, podemos mostrar datos del usuario actual
+        const userFilter = { creator: req.user._id };
+
         const regionMetrics = await Event.aggregate([
+            { $match: userFilter },
             {
                 $lookup: {
                     from: 'users',
-                    localField: 'userId',
+                    localField: 'creator',
                     foreignField: '_id',
                     as: 'creatorInfo',
                 },
@@ -120,19 +159,31 @@ const getRegionMetrics = async (req: any, res: any) => {
             { $sort: { totalAttendees: -1 } },
         ]);
 
-        res.json(regionMetrics);
+        res.status(200).json({
+            success: true,
+            data: regionMetrics
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching region metrics' });
+        console.error('Error fetching region metrics:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error fetching region metrics',
+            error: (error as Error).message 
+        });
     }
 }
 
 const getWalletMetrics = async (req: any, res: any) => {
     try {
+        const userFilter = { creator: req.user._id };
+
         const totalNewWallets = await Event.aggregate([
+            { $match: userFilter },
             { $group: { _id: null, total: { $sum: "$newWallets" } } },
         ]);
 
         const transactionsDuringEvents = await Event.aggregate([
+            { $match: userFilter },
             { $unwind: '$transactionsDuringEvent' },
             { $group: {
                 _id: '$transactionsDuringEvent.type',
@@ -145,6 +196,7 @@ const getWalletMetrics = async (req: any, res: any) => {
         const costPerWallet = await Event.aggregate([
             {
                 $match: {
+                    ...userFilter,
                     newWallets: { $gt: 0 },
                     totalCost: { $gt: 0 },
                 },
@@ -159,13 +211,21 @@ const getWalletMetrics = async (req: any, res: any) => {
             { $sort: { costPerWallet: 1 } },
         ]);
 
-        res.json({
-            totalNewWallets: totalNewWallets[0]?.total || 0,
-            transactionsByType: transactionsDuringEvents,
-            costPerWallet: costPerWallet[0]?.costPerWallet || 0,
+        res.status(200).json({
+            success: true,
+            data: {
+                totalNewWallets: totalNewWallets[0]?.total || 0,
+                transactionsByType: transactionsDuringEvents,
+                costPerWallet: costPerWallet[0]?.costPerWallet || 0,
+            }
         });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching wallet metrics' });
+        console.error('Error fetching wallet metrics:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error fetching wallet metrics',
+            error: (error as Error).message 
+        });
     }
 }
 

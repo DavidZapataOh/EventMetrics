@@ -1,14 +1,19 @@
 import express from 'express' 
-import { createEvent, getEvents, getEventById, updateEvent, deleteEvent, importEventData } from '../../handlers/eventHandler'
+import { createEvent, getEvents, getEventById, updateEvent, deleteEvent } from '../../handlers/eventHandler'
 import authMiddleware from '../../middleware/authMiddleware'
+import { uploadToS3 } from '../../services/uploadService'
 
 const router = express.Router()
 
-router.post('/', authMiddleware, createEvent)
+// Rutas con upload de imagen (usando multer)
+router.post('/', authMiddleware, uploadToS3.single('logo'), createEvent)
+router.put('/:id', authMiddleware, uploadToS3.single('logo'), updateEvent)
+
+// Rutas sin upload
 router.get('/', authMiddleware, getEvents)
 router.get('/:id', authMiddleware, getEventById)
-router.put('/:id', authMiddleware, updateEvent)
 router.delete('/:id', authMiddleware, deleteEvent)
-router.post('/import', authMiddleware, importEventData)
+
+// Nota: importEventData se movió a una ruta separada
 
 export default router
