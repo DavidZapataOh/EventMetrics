@@ -12,6 +12,7 @@ import userRoutes from './routes/api/users'
 import analyticsRoutes from './routes/api/analytics'
 import web3Routes from './routes/api/web3'
 import walletsRoutes from './routes/api/wallets'
+import importRoutes from './routes/api/import'
 
 configureSecurityMiddleware(app)
 
@@ -48,6 +49,7 @@ const initializeServer = async () => {
         app.use('/api/analytics', analyticsRoutes)
         app.use('/api/web3', web3Routes)
         app.use('/api/wallets', walletsRoutes)
+        app.use('/api/import', importRoutes)
     } catch (error) {
         console.log(error)
         process.exit(1)

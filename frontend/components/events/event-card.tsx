@@ -1,10 +1,11 @@
 import React from "react";
 import Link from "next/link";
 import { Card, CardContent, CardFooter } from "../ui/card";
-import { Badge } from "../ui/badge";
-import { formatDate, getEventTypeLabel, cn } from "@/lib/utils";
+import { Badge, BadgeProps } from "../ui/badge";
+import { formatDate, getEventTypeLabel } from "@/lib/utils";
 import { Calendar, Users, Wallet, ArrowRight } from "lucide-react";
 import type { Event } from "@/types/event";
+import Image from "next/image";
 
 interface EventCardProps {
   event: Event;
@@ -25,8 +26,8 @@ export function EventCard({ event }: EventCardProps) {
       <Card className="h-full overflow-hidden hover:border-primary/50">
         <div className="relative h-40 overflow-hidden">
           {event.logo ? (
-            <img 
-              src={event.logo} 
+            <Image 
+              src={event.logo as unknown as string} 
               alt={event.name} 
               className="w-full h-full object-cover"
             />
@@ -36,7 +37,7 @@ export function EventCard({ event }: EventCardProps) {
             </div>
           )}
           <Badge 
-            variant={getBadgeVariant(event.type)}
+            variant={getBadgeVariant(event.type) as BadgeProps['variant']}
             className="absolute top-3 right-3"
           >
             {getEventTypeLabel(event.type)}

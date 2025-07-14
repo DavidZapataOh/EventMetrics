@@ -4,8 +4,7 @@ import React, { useState } from "react";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { PageHeader } from "@/components/shared/page-header";
 import { TimelineChart } from "@/components/analytics/timeline-chart";
-import { useAnalytics } from "@/lib/hooks/use-analytics";
-import { Spinner } from "@/components/ui/spinner";
+import { useTimelineMetrics } from "@/lib/hooks/use-analytics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,8 +13,7 @@ export default function TimelineAnalyticsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   
-  const { timelineMetricsQuery } = useAnalytics();
-  const { data, isLoading } = timelineMetricsQuery(startDate, endDate);
+  const { data, isLoading } = useTimelineMetrics(startDate, endDate);
   
   const handleFilter = () => {
     // El hook ya reaccionará al cambio de estados
@@ -33,7 +31,6 @@ export default function TimelineAnalyticsPage() {
       
       <PageHeader 
         title="Timeline Analytics" 
-        description="Event metrics over time"
       />
       
       <Card>

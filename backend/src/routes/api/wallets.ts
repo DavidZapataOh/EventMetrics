@@ -1,5 +1,5 @@
 import express from 'express';
-import { getWalletInfo, searchWallet } from '../../handlers/walletHandler';
+import * as walletHandler from '../../handlers/walletHandler';
 import authMiddleware from '../../middleware/authMiddleware';
 
 const router = express.Router();
@@ -8,9 +8,9 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // GET /api/wallets/search?address=0x...
-router.get('/search', searchWallet);
+router.get('/search', walletHandler.searchWallet);
 
 // GET /api/wallets/:address
-router.get('/:address', getWalletInfo);
+router.get('/:address', walletHandler.getWalletInfo);
 
 export default router; 

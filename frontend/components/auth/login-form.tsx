@@ -34,7 +34,7 @@ export function LoginForm() {
     try {
       await login(data);
       router.push("/dashboard");
-    } catch (error) {
+    } catch  {
       // Error handled in the useAuth hook
     }
   };
@@ -46,7 +46,7 @@ export function LoginForm() {
           id="email"
           label="Email"
           type="email"
-          icon={<Mail className="w-4 h-4 text-light-500" />}
+          leftIcon={<Mail className="w-4 h-4 text-light-500" />}
           error={errors.email?.message}
           {...register("email")}
         />
@@ -57,7 +57,7 @@ export function LoginForm() {
           id="password"
           label="Password"
           type="password"
-          icon={<Lock className="w-4 h-4 text-light-500" />}
+          leftIcon={<Lock className="w-4 h-4 text-light-500" />}
           error={errors.password?.message}
           {...register("password")}
         />
@@ -81,7 +81,7 @@ export function LoginForm() {
       </Button>
 
       <div className="text-center text-sm text-light-400">
-        Don't have an account?{" "}
+        Don&apos;t have an account?{" "}
         <Link
           href="/register"
           className="text-primary-400 hover:text-primary-300"

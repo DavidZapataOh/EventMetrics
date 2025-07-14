@@ -1,6 +1,5 @@
 import apiClient from './axios-config';
 import { AuthUser, LoginCredentials, RegisterData } from '@/types/user';
-import { ApiResponse } from '@/types/api';
 
 export const login = async (credentials: LoginCredentials): Promise<{token: string, user: AuthUser}> => {
   const response = await apiClient.post('/auth/login', credentials);

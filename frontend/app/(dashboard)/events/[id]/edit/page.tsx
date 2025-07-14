@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { PageHeader } from "@/components/shared/page-header";
 import { EventForm } from "@/components/events/event-form";
-import { useEvents } from "@/lib/hooks/use-events";
+import { useEvents, useEvent } from "@/lib/hooks/use-events";
 import { EventFormData } from "@/types/event";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,8 @@ import Link from "next/link";
 export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
   const router = useRouter();
-  const { eventQuery, updateEvent, isUpdating } = useEvents();
-  const { data: event, isLoading, isError } = eventQuery(id);
+  const { updateEvent, isUpdating } = useEvents();
+  const { data: event, isLoading, isError } = useEvent(id);
 
   const handleSubmit = async (data: EventFormData) => {
     try {
@@ -61,7 +61,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     description: event.description,
     date: new Date(event.date).toISOString().split('T')[0], // Convertir a formato YYYY-MM-DD
     type: event.type,
-    logo: event.logo,
+    logo: event.logo as unknown as File,
     objectives: event.objectives || [],
     kpis: event.kpis || [],
     // Agregar otros campos si existen

@@ -1,8 +1,8 @@
 import React from "react";
 import Image from "next/image";
-import { Calendar, Users, Wallet, DollarSign, Award, Clock, Tag, Target, ImageIcon } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Calendar, Users, Wallet, DollarSign, Award, Clock, Tag, Target } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge, BadgeProps } from "@/components/ui/badge";
 import { Event } from "@/types/event";
 import { EventMap } from "./event-map";
 import { formatDate, formatCurrency, getEventTypeLabel } from "@/lib/utils";
@@ -48,7 +48,7 @@ export function EventDetails({ event }: EventDetailsProps) {
         <CardHeader>
           <div className="flex justify-between items-start">
             <CardTitle className="text-text">Detalles del evento</CardTitle>
-            <Badge variant={getBadgeVariant(event.type)}>
+            <Badge variant={getBadgeVariant(event.type) as BadgeProps['variant']}>
               {getEventTypeLabel(event.type)}
             </Badge>
           </div>

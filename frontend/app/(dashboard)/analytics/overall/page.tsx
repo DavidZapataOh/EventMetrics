@@ -32,8 +32,8 @@ export default function OverallAnalyticsPage() {
       
       <PageHeader 
         title="Overall Analytics" 
-        description="High-level metrics and KPIs"
       />
+      <p className="text-muted-foreground">High-level metrics and KPIs</p>
       
       <MetricsOverview metrics={overallMetricsQuery.data} />
       

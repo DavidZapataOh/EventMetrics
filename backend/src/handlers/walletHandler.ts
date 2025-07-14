@@ -1,25 +1,26 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { WalletService } from '../services/walletService';
 
 const walletService = new WalletService();
 
-export const getWalletInfo = async (req: Request, res: Response) => {
+export const getWalletInfo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { address } = req.params;
     
     if (!address) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Wallet address is required'
       });
+      return;
     }
 
-    // Validar formato de dirección
     if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid wallet address format'
       });
+      return;
     }
 
     const walletInfo = await walletService.getWalletInfo(address);
@@ -29,23 +30,20 @@ export const getWalletInfo = async (req: Request, res: Response) => {
       data: walletInfo
     });
   } catch (error) {
-    console.error('Error getting wallet info:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error retrieving wallet information'
-    });
+    next(error);
   }
 };
 
-export const searchWallet = async (req: Request, res: Response) => {
+export const searchWallet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { address } = req.query;
     
     if (!address || typeof address !== 'string') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Wallet address is required'
       });
+      return;
     }
 
     const searchResult = await walletService.searchWallet(address);
@@ -55,10 +53,6 @@ export const searchWallet = async (req: Request, res: Response) => {
       data: searchResult
     });
   } catch (error) {
-    console.error('Error searching wallet:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error searching wallet'
-    });
+    next(error);
   }
 }; 

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardHeader, CardContent, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -13,9 +13,10 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { profileSchema } from "@/lib/validators";
 import { REGIONS } from "@/lib/constants";
-import { User, Mail, Lock, Upload, Map, Calendar, CheckCircle } from "lucide-react";
+import { User, Mail, Lock, Upload } from "lucide-react";
 import { z } from "zod";
 import { PageHeader } from "@/components/shared/page-header";
+import Image from "next/image";
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
@@ -40,13 +41,13 @@ export default function ProfilePage() {
     },
   });
 
-  const onSubmit = async (data: ProfileFormValues) => {
+  const onSubmit = async () => {
     setIsUpdating(true);
     try {
       // Simulation of update
       await new Promise((resolve) => setTimeout(resolve, 1000));
       toast.success("Profile updated successfully");
-    } catch (error) {
+    } catch {
       toast.error("Error updating the profile");
     } finally {
       setIsUpdating(false);
@@ -90,9 +91,9 @@ export default function ProfilePage() {
                 <div className="relative mb-4">
                   <div className="w-32 h-32 rounded-full overflow-hidden bg-element flex items-center justify-center">
                     {profileImage ? (
-                      <img
+                      <Image
                         src={profileImage}
-                        alt={user?.name}
+                        alt={user?.name || "Profile image"}
                         className="w-full h-full object-cover"
                       />
                     ) : (

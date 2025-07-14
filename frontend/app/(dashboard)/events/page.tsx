@@ -8,7 +8,6 @@ import { EventsTable } from "@/components/events/events-table";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useEvents } from "@/lib/hooks/use-events";
-import { Spinner } from "@/components/ui/spinner";
 
 export default function EventsPage() {
   const { events, eventsQuery, pagination, setQueryParams, deleteEvent } = useEvents();
@@ -33,7 +32,6 @@ export default function EventsPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <PageHeader 
           title="Events" 
-          description="Manage your blockchain events"
         />
         
         <Link href="/events/create">

@@ -8,11 +8,9 @@ import {
   Users, 
   Wallet, 
   DollarSign, 
-  MoreVertical,
   Edit,
   Trash,
   FileText,
-  ExternalLink,
   ImageIcon,
   Clock
 } from "lucide-react";
@@ -25,8 +23,8 @@ import {
   TableCell 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { formatDate, formatCurrency, getEventTypeLabel, cn } from "@/lib/utils";
+import { Badge, BadgeProps } from "@/components/ui/badge";
+import { formatDate, formatCurrency, getEventTypeLabel } from "@/lib/utils";
 import { Event } from "@/types/event";
 import { Dialog } from "@/components/ui/dialog";
 
@@ -50,6 +48,15 @@ export function EventsTable({ events, onDelete, isLoading = false }: EventsTable
       onDelete(selectedEventId);
     }
     setShowDeleteDialog(false);
+  };
+
+  const getBadgeVariant = (type: string) => {
+    switch(type) {
+      case 'in-person': return 'primary';
+      case 'virtual': return 'secondary';
+      case 'hybrid': return 'accent';
+      default: return 'default';
+    }
   };
 
   return (
@@ -135,10 +142,7 @@ export function EventsTable({ events, onDelete, isLoading = false }: EventsTable
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={
-                      event.type === 'in-person' ? 'primary' : 
-                      event.type === 'virtual' ? 'secondary' : 'accent'
-                    }>
+                    <Badge variant={getBadgeVariant(event.type) as BadgeProps['variant']}>
                       {getEventTypeLabel(event.type)}
                     </Badge>
                   </TableCell>

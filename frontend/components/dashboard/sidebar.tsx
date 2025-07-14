@@ -15,6 +15,7 @@ import {
   Wallet
 } from "lucide-react";
 import { useAuth } from "@/lib/hooks/use-auth";
+import Image from "next/image";
 
 const navItems = [
   {
@@ -84,7 +85,7 @@ export function Sidebar() {
     <div className="flex flex-col h-full bg-card border-r border-element w-64">
       <div className="p-6">
         <div className="flex items-center space-x-2">
-          <img src="/logo.svg" alt="Logo" className="h-8 w-8" />
+          <Image src="/logo.svg" alt="Logo" width={32} height={32} />
           <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">
             EventMetrics
           </h1>

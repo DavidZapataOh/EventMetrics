@@ -48,7 +48,7 @@ export function UserMetricsTable({ metrics, isLoading = false }: UserMetricsTabl
   const sortedData = React.useMemo(() => {
     return [...data].sort((a, b) => {
       const factor = sortDir === "asc" ? 1 : -1;
-      return factor * ((a as any)[sortBy] - (b as any)[sortBy]);
+      return factor * ((a as unknown as Record<string, number>)[sortBy] - (b as unknown as Record<string, number>)[sortBy]);
     });
   }, [data, sortBy, sortDir]);
 

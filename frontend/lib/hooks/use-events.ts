@@ -11,12 +11,8 @@ import {
   deleteEvent,
   importEventData
 } from '../api/events-api';
-import { Event, EventFormData } from '@/types/event';
+import { EventFormData } from '@/types/event';
 import { QueryParams } from '@/types/api';
-
-interface UseEventsProps {
-  initialParams?: QueryParams;
-}
 
 export function useEvents(initialParams?: QueryParams) {
   const queryClient = useQueryClient();
@@ -37,20 +33,6 @@ export function useEvents(initialParams?: QueryParams) {
     }
   );
 
-  const eventQuery = (id: string) => useQuery(
-    ['event', id], 
-    () => getEvent(id),
-    {
-      enabled: !!id,
-      staleTime: 5 * 60 * 1000,
-      retry: (failureCount, error: any) => {
-        // No reintentar si es un error 404
-        if (error?.response?.status === 404) return false;
-        return failureCount < 3;
-      }
-    }
-  );
-
   const createEventMutation = useMutation(
     (data: EventFormData) => createEvent(data),
     {
@@ -59,8 +41,8 @@ export function useEvents(initialParams?: QueryParams) {
         queryClient.setQueryData(['event', newEvent._id], newEvent);
         toast.success('Evento creado exitosamente');
       },
-      onError: (error: any) => {
-        const message = error.response?.data?.message || 'Error al crear el evento';
+      onError: (error: unknown) => {
+        const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Error al crear el evento';
         toast.error(message);
       },
     }
@@ -74,8 +56,8 @@ export function useEvents(initialParams?: QueryParams) {
         queryClient.setQueryData(['event', variables.id], updatedEvent);
         toast.success('Evento actualizado exitosamente');
       },
-      onError: (error: any) => {
-        const message = error.response?.data?.message || 'Error al actualizar el evento';
+      onError: (error: unknown) => {
+        const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Error al actualizar el evento';
         toast.error(message);
       },
     }
@@ -89,24 +71,28 @@ export function useEvents(initialParams?: QueryParams) {
         queryClient.removeQueries(['event', deletedId]);
         toast.success('Evento eliminado exitosamente');
       },
-      onError: (error: any) => {
-        const message = error.response?.data?.message || 'Error al eliminar el evento';
+      onError: (error: unknown) => {
+        const message = (error as Error).message || 'Error al eliminar el evento';
         toast.error(message);
       },
     }
   );
 
   const importEventDataMutation = useMutation(
-    ({ id, file }: { id: string; file: File }) => importEventData(id, file),
+    ({ id, file, type }: { id: string; file: File; type?: 'attendees' | 'metrics' }) => {
+      console.log('🔄 Mutation called with:', { id, file: file ? file.name : 'no file', type });
+      return importEventData(id, file, type || 'attendees');
+    },
     {
       onSuccess: (updatedEvent, variables) => {
         queryClient.invalidateQueries(['events']);
         queryClient.setQueryData(['event', variables.id], updatedEvent);
         toast.success('Datos importados exitosamente');
       },
-      onError: (error: any) => {
-        const message = error.response?.data?.message || 'Error al importar los datos';
-        toast.error(message);
+      onError: (error: unknown) => {
+        console.error('Error importing data:', error);
+        const errorMessage = (error as { response?: { data?: { message?: string } } }).response?.data?.message || (error as Error)?.message || 'Error al importar datos';
+        toast.error(errorMessage);
       },
     }
   );
@@ -123,7 +109,6 @@ export function useEvents(initialParams?: QueryParams) {
     // Data
     events: eventsQuery.data?.data || [],
     eventsQuery,
-    eventQuery,
     
     // Pagination
     pagination: {
@@ -137,7 +122,10 @@ export function useEvents(initialParams?: QueryParams) {
     createEvent: createEventMutation.mutateAsync,
     updateEvent: updateEventMutation.mutateAsync,
     deleteEvent: deleteEventMutation.mutateAsync,
-    importEventData: importEventDataMutation.mutateAsync,
+    importEventData: async (id: string, file: File, type: 'attendees' | 'metrics' = 'attendees') => {
+      console.log('📤 Hook importEventData called with:', { id, fileName: file?.name, type });
+      return importEventDataMutation.mutateAsync({ id, file, type });
+    },
     
     // Loading states
     isCreating: createEventMutation.isLoading,
@@ -150,4 +138,21 @@ export function useEvents(initialParams?: QueryParams) {
     refetchEvents,
     refetchEvent,
   };
+}
+
+// Hook separado para obtener un evento individual
+export function useEvent(id: string) {
+  return useQuery(
+    ['event', id], 
+    () => getEvent(id),
+    {
+      enabled: !!id,
+      staleTime: 5 * 60 * 1000,
+      retry: (failureCount, error: unknown) => {
+        // No reintentar si es un error 404
+        if ((error as { response?: { status?: number } }).response?.status === 404) return false;
+        return failureCount < 3;
+      }
+    }
+  );
 }

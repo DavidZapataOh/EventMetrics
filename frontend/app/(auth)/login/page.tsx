@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { useAuth } from "@/lib/hooks/use-auth";
+import Image from "next/image";
 
 export default function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -21,7 +21,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="flex justify-center mb-4">
-            <img src="/logo.svg" alt="Logo" className="h-12 w-12" />
+            <Image src="/logo.svg" alt="Logo" width={48} height={48} />
           </div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">
             EventMetrics

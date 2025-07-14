@@ -30,7 +30,7 @@ export default function WalletsAnalyticsPage() {
       
       <PageHeader 
         title="Wallet Analytics" 
-        description="Metrics about wallet creation and usage"
+        subtitle="Metrics about wallet creation and usage"
       />
       
       <WalletStats data={walletMetricsQuery.data} />

@@ -16,7 +16,7 @@ export const getOverallMetrics = async (): Promise<OverallMetrics> => {
   }
   
   // Fallback para respuestas directas
-  return response.data as OverallMetrics;
+  return response.data as unknown as OverallMetrics;
 };
 
 export const getUserMetrics = async (): Promise<UserMetrics[]> => {
@@ -26,7 +26,7 @@ export const getUserMetrics = async (): Promise<UserMetrics[]> => {
     return response.data.data;
   }
   
-  return response.data as UserMetrics[];
+  return response.data as unknown as UserMetrics[];
 };
 
 export const getTimelineMetrics = async (
@@ -40,7 +40,7 @@ export const getTimelineMetrics = async (
     return response.data.data;
   }
   
-  return response.data as TimelineMetric[];
+  return response.data as unknown as TimelineMetric[];
 };
 
 export const getRegionMetrics = async (): Promise<RegionMetrics[]> => {
@@ -50,7 +50,7 @@ export const getRegionMetrics = async (): Promise<RegionMetrics[]> => {
     return response.data.data;
   }
   
-  return response.data as RegionMetrics[];
+  return response.data as unknown as RegionMetrics[];
 };
 
 export const getWalletMetrics = async (): Promise<WalletMetrics> => {
@@ -60,5 +60,5 @@ export const getWalletMetrics = async (): Promise<WalletMetrics> => {
     return response.data.data;
   }
   
-  return response.data as WalletMetrics;
+  return response.data as unknown as WalletMetrics;
 };

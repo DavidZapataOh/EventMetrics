@@ -37,7 +37,7 @@ export default function AnalyticsPage() {
       
       <PageHeader 
         title="Analytics" 
-        description="Comprehensive metrics for your blockchain events"
+        subtitle="Comprehensive metrics for your blockchain events"
       />
       
       <MetricsOverview 

@@ -20,10 +20,8 @@ export function RegionMap({ data, isLoading = false }: RegionMapProps) {
 
   const regionsData = data || placeholderData;
   
-  const totalEvents = regionsData.reduce((sum, item) => sum + item.eventCount, 0);
-  const totalAttendees = regionsData.reduce((sum, item) => sum + item.totalAttendees, 0);
   const totalWallets = regionsData.reduce((sum, item) => sum + item.totalNewWallets, 0);
-  const totalCost = regionsData.reduce((sum, item) => sum + item.totalCost, 0);
+
 
   return (
     <Card>

@@ -30,7 +30,7 @@ export default function RegionsAnalyticsPage() {
       
       <PageHeader 
         title="Region Analysis" 
-        description="Geographic distribution of events and metrics"
+        subtitle="Geographic distribution of events and metrics"
       />
       
       <RegionMap data={regionMetricsQuery.data} />

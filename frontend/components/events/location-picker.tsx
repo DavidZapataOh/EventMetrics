@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { MapPin, Search } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
@@ -28,6 +28,44 @@ export function LocationPicker({ onLocationSelect, defaultLocation, disabled }: 
   const [searchInput, setSearchInput] = useState(defaultLocation?.address || '');
   const [mapLoading, setMapLoading] = useState(true);
   const { isLoading: mapsLoading, error, isLoaded } = useGoogleMaps();
+
+  const reverseGeocode = useCallback(async (lat: number, lng: number) => {
+    const geocoder = new google.maps.Geocoder();
+    
+    try {
+      const response = await geocoder.geocode({ location: { lat, lng } });
+      
+      if (response.results[0]) {
+        const result = response.results[0];
+        const addressComponents = result.address_components;
+        
+        let city = '';
+        let country = '';
+        
+        addressComponents.forEach(component => {
+          if (component.types.includes('locality')) {
+            city = component.long_name;
+          }
+          if (component.types.includes('country')) {
+            country = component.long_name;
+          }
+        });
+
+        const locationData = {
+          address: result.formatted_address,
+          city,
+          country,
+          coordinates: { lat, lng },
+          placeId: result.place_id
+        };
+
+        setSearchInput(result.formatted_address);
+        onLocationSelect(locationData);
+      }
+    } catch (error) {
+      console.error('Error in reverse geocoding:', error);
+    }
+  }, [onLocationSelect]);
 
   useEffect(() => {
     if (!isLoaded || !mapRef.current) return;
@@ -75,45 +113,7 @@ export function LocationPicker({ onLocationSelect, defaultLocation, disabled }: 
       console.error('Error creating map:', error);
       setMapLoading(false);
     }
-  }, [isLoaded, defaultLocation]);
-
-  const reverseGeocode = async (lat: number, lng: number) => {
-    const geocoder = new google.maps.Geocoder();
-    
-    try {
-      const response = await geocoder.geocode({ location: { lat, lng } });
-      
-      if (response.results[0]) {
-        const result = response.results[0];
-        const addressComponents = result.address_components;
-        
-        let city = '';
-        let country = '';
-        
-        addressComponents.forEach(component => {
-          if (component.types.includes('locality')) {
-            city = component.long_name;
-          }
-          if (component.types.includes('country')) {
-            country = component.long_name;
-          }
-        });
-
-        const locationData = {
-          address: result.formatted_address,
-          city,
-          country,
-          coordinates: { lat, lng },
-          placeId: result.place_id
-        };
-
-        setSearchInput(result.formatted_address);
-        onLocationSelect(locationData);
-      }
-    } catch (error) {
-      console.error('Error in reverse geocoding:', error);
-    }
-  };
+  }, [isLoaded, defaultLocation, reverseGeocode]);
 
   const searchLocation = async () => {
     if (!searchInput.trim() || !map) return;

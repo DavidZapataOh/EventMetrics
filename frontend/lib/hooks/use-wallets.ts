@@ -1,31 +1,34 @@
 import { useQuery } from 'react-query';
 import { walletsApi } from '@/lib/api/wallets-api';
 
+export function useWalletSearch(address: string) {
+  return useQuery(
+    ['wallet-search', address],
+    () => walletsApi.searchWallet(address),
+    {
+      enabled: !!address && address.length === 42,
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
+    }
+  );
+}
+
+export function useWalletInfo(address: string) {
+  return useQuery(
+    ['wallet-info', address],
+    () => walletsApi.getWalletInfo(address),
+    {
+      enabled: !!address && address.length === 42,
+      retry: 1,
+      staleTime: 2 * 60 * 1000,
+    }
+  );
+}
+
+// Hook principal que combina ambos si necesitas ambos en el mismo componente
 export function useWallets() {
-  const searchWallet = (address: string) => 
-    useQuery(
-      ['wallet-search', address],
-      () => walletsApi.searchWallet(address),
-      {
-        enabled: !!address && address.length === 42, // Solo ejecutar si es una dirección válida
-        retry: 1,
-        staleTime: 5 * 60 * 1000, // 5 minutos
-      }
-    );
-
-  const getWalletInfo = (address: string) =>
-    useQuery(
-      ['wallet-info', address],
-      () => walletsApi.getWalletInfo(address),
-      {
-        enabled: !!address && address.length === 42,
-        retry: 1,
-        staleTime: 2 * 60 * 1000, // 2 minutos
-      }
-    );
-
   return {
-    searchWallet,
-    getWalletInfo
+    useWalletSearch,
+    useWalletInfo
   };
 } 

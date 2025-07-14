@@ -11,24 +11,24 @@ import {
 
 export function useAnalytics() {
   const overallMetricsQuery = useQuery('overallMetrics', getOverallMetrics);
-  
   const userMetricsQuery = useQuery('userMetrics', getUserMetrics);
-  
-  const timelineMetricsQuery = (startDate?: string, endDate?: string) => 
-    useQuery(
-      ['timelineMetrics', startDate, endDate], 
-      () => getTimelineMetrics(startDate, endDate)
-    );
-  
   const regionMetricsQuery = useQuery('regionMetrics', getRegionMetrics);
-  
   const walletMetricsQuery = useQuery('walletMetrics', getWalletMetrics);
 
   return {
     overallMetricsQuery,
     userMetricsQuery,
-    timelineMetricsQuery,
     regionMetricsQuery,
     walletMetricsQuery,
   };
+}
+
+export function useTimelineMetrics(startDate?: string, endDate?: string) {
+  return useQuery(
+    ['timelineMetrics', startDate, endDate], 
+    () => getTimelineMetrics(startDate, endDate),
+    {
+      enabled: !!startDate && !!endDate
+    }
+  );
 }

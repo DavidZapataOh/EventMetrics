@@ -64,9 +64,9 @@ export function useAuth() {
       toast.success('Login successful!');
       router.push('/dashboard');
       return userData;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-      toast.error(error.response?.data?.message || 'Error logging in');
+      toast.error((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Error logging in');
       throw error;
     } finally {
       setIsLoading(false);
@@ -92,8 +92,8 @@ export function useAuth() {
         toast.error('Error during registration process');
         throw new Error('Invalid user data received');
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Error to register');
+    } catch (error: unknown) {
+      toast.error((error as Error).message || 'Error to register');
       throw error;
     } finally {
       setIsLoading(false);
@@ -110,7 +110,7 @@ export function useAuth() {
       
       toast.success('Logged out successfully');
       router.push('/login');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Logout error:', error);
     }
   };

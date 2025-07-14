@@ -23,7 +23,7 @@ export function TimelineChart({ data, isLoading = false }: TimelineChartProps) {
   const chartData = data || placeholderData;
   const [metric, setMetric] = React.useState<"confirmedAttendees" | "newWallets" | "totalCost">("newWallets");
 
-  const maxValue = Math.max(...chartData.map(d => (d as any)[metric]));
+  const maxValue = Math.max(...chartData.map(d => (d as TimelineMetric)[metric] || 0));
 
   return (
     <Card>
@@ -32,7 +32,7 @@ export function TimelineChart({ data, isLoading = false }: TimelineChartProps) {
         <div className="flex space-x-2">
           <select
             value={metric}
-            onChange={(e) => setMetric(e.target.value as any)}
+            onChange={(e) => setMetric(e.target.value as "confirmedAttendees" | "newWallets" | "totalCost")}
             className="bg-card border border-element rounded text-sm px-2 py-1 text-text cursor-pointer"
           >
             <option value="newWallets">Wallets</option>
@@ -50,8 +50,8 @@ export function TimelineChart({ data, isLoading = false }: TimelineChartProps) {
           ) : (
             <div className="h-full flex items-end space-x-2">
               {chartData.map((item) => {
-                const value = (item as any)[metric];
-                const height = `${(value / maxValue) * 100}%`;
+                const value = (item as TimelineMetric)[metric] || 0;
+                const height = `${maxValue > 0 ? (value / maxValue) * 100 : 0}%`;
                 
                 const getColor = () => {
                   switch(metric) {
@@ -80,8 +80,8 @@ export function TimelineChart({ data, isLoading = false }: TimelineChartProps) {
                         <div className="text-text">{formatDate(item.date)}</div>
                         <div className="text-text">
                           {metric === "totalCost" 
-                            ? `$${value.toLocaleString()}`
-                            : value.toLocaleString()}
+                            ? `$${(value || 0).toLocaleString()}`
+                            : (value || 0).toLocaleString()}
                         </div>
                       </div>
                     </div>

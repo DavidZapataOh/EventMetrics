@@ -1,18 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { FileSpreadsheet, Upload, X, Check, AlertCircle, Download, Users, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { importDataSchema } from "@/lib/validators";
 import { useToast } from "@/lib/hooks/use-toast";
-import { z } from "zod";
 import * as XLSX from 'xlsx';
-
-type ImportDataFormValues = z.infer<typeof importDataSchema>;
 
 interface ImportDataFormProps {
   eventId: string;
@@ -25,27 +19,85 @@ export function ImportDataForm({
   onImport,
   isLoading = false,
 }: ImportDataFormProps) {
-  const toast = useToast();
+  const toast = useToast(); // Usar el hook correctamente
   const [dragActive, setDragActive] = useState(false);
   const [importType, setImportType] = useState<'attendees' | 'metrics'>('attendees');
-  
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-  } = useForm<ImportDataFormValues>({
-    resolver: zodResolver(importDataSchema),
-  });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string>('');
 
-  const selectedFile = watch("file");
+  const validateFile = (file: File): string => {
+    if (!file) {
+      return 'Debes seleccionar un archivo';
+    }
 
-  const onSubmit = async (data: ImportDataFormValues) => {
+    const validTypes = [
+      'text/csv',
+      'application/csv',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+    
+    const fileName = file.name.toLowerCase();
+    const isValidExtension = fileName.endsWith('.csv') || fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+    const isValidType = validTypes.includes(file.type) || isValidExtension;
+
+    if (!isValidType) {
+      return 'Formato de archivo no válido. Usa CSV o Excel (.xlsx, .xls)';
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      return 'El archivo es muy grande. Máximo 10MB';
+    }
+
+    return '';
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    console.log('onSubmit called with:', { 
+      selectedFile: selectedFile ? { name: selectedFile.name, size: selectedFile.size, type: selectedFile.type } : null, 
+      importType,
+      eventId
+    });
+    
+    if (!selectedFile) {
+      setFileError('Debes seleccionar un archivo');
+      return;
+    }
+
+    const fileValidationError = validateFile(selectedFile);
+    if (fileValidationError) {
+      setFileError(fileValidationError);
+      return;
+    }
+
     try {
-      await onImport(eventId, data.file, importType);
-    } catch (error) {
-      toast.error("Error importing data");
+      console.log('About to call onImport with:', { 
+        eventId, 
+        fileName: selectedFile.name, 
+        fileSize: selectedFile.size,
+        fileType: selectedFile.type,
+        importType 
+      });
+      
+      // Llamar directamente con los parámetros correctos
+      await onImport(eventId, selectedFile, importType);
+      
+      // Limpiar después del éxito
+      setSelectedFile(null);
+      setFileError('');
+      
+      // Limpiar el input también
+      const fileInput = document.getElementById("file-upload") as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+      
+      toast.success("Datos importados correctamente");
+    } catch (error: unknown) {
+      console.error('Error in onSubmit:', error);
+      toast.error((error as Error).message || "Error importing data");
     }
   };
 
@@ -63,33 +115,57 @@ export function ImportDataForm({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
+    
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setValue("file", e.dataTransfer.files[0]);
+      const file = e.dataTransfer.files[0];
+      console.log('File dropped:', { name: file.name, size: file.size, type: file.type });
+      
+      const error = validateFile(file);
+      if (error) {
+        setFileError(error);
+        return;
+      }
+      
+      setSelectedFile(file);
+      setFileError('');
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setValue("file", e.target.files[0]);
+      const file = e.target.files[0];
+      console.log('File selected:', { name: file.name, size: file.size, type: file.type });
+      
+      const error = validateFile(file);
+      if (error) {
+        setFileError(error);
+        return;
+      }
+      
+      setSelectedFile(file);
+      setFileError('');
     }
   };
 
   const clearFile = () => {
-    setValue("file", null as unknown as File);
+    setSelectedFile(null);
+    setFileError('');
+    
+    // Limpiar el input también
+    const fileInput = document.getElementById("file-upload") as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
   };
 
   const downloadAttendeesTemplate = () => {
     try {
-      // Crear datos para el template de asistentes
       const data = [
-        // Headers
         ['name', 'email', 'walletAddress'],
-        // Ejemplos de datos
         ['Juan Pérez', 'juan.perez@email.com', '0x1234567890abcdef1234567890abcdef12345678'],
         ['María García', 'maria.garcia@email.com', '0xabcdef1234567890abcdef1234567890abcdef12'],
         ['Carlos López', 'carlos.lopez@email.com', ''],
         ['Ana Martínez', 'ana.martinez@email.com', '0x9876543210fedcba9876543210fedcba98765432'],
-        // Filas vacías para que el usuario pueda agregar más
         ['', '', ''],
         ['', '', ''],
         ['', '', '']
@@ -97,16 +173,14 @@ export function ImportDataForm({
 
       downloadExcel(data, 'attendees-template', 'Asistentes');
       toast.success("Template de asistentes descargado");
-    } catch (error) {
+    } catch {
       toast.error("Error al descargar el template");
     }
   };
 
   const downloadMetricsTemplate = () => {
     try {
-      // Crear datos para el template de métricas
       const data = [
-        // Headers con descripciones más claras
         [
           'confirmedAttendees',
           'totalAttendees', 
@@ -123,7 +197,6 @@ export function ImportDataForm({
           'specialGuests',
           'openedWalletAddresses'
         ],
-        // Fila con descripciones de cada campo
         [
           'Asistentes confirmados',
           'Total de asistentes',
@@ -140,7 +213,6 @@ export function ImportDataForm({
           'Invitados especiales (separar con ;)',
           'Direcciones de wallets (separar con ;)'
         ],
-        // Ejemplo de datos
         [
           150,
           180,
@@ -161,20 +233,16 @@ export function ImportDataForm({
 
       downloadExcel(data, 'event-metrics-template', 'Métricas del Evento');
       toast.success("Template de métricas descargado");
-    } catch (error) {
+    } catch {
       toast.error("Error al descargar el template");
     }
   };
 
-  const downloadExcel = (data: any[][], filename: string, sheetName: string) => {
+  const downloadExcel = (data: unknown[][], filename: string, sheetName: string) => {
     try {
-      // Crear un nuevo workbook
       const wb = XLSX.utils.book_new();
-      
-      // Crear worksheet con los datos
       const ws = XLSX.utils.aoa_to_sheet(data);
       
-      // Configurar el ancho de las columnas
       const colWidths = data[0].map((_, colIndex) => {
         const maxLength = Math.max(
           ...data.map(row => 
@@ -185,39 +253,8 @@ export function ImportDataForm({
       });
       ws['!cols'] = colWidths;
       
-      // Estilo para los headers (primera fila)
-      const headerStyle = {
-        font: { bold: true, color: { rgb: "FFFFFF" } },
-        fill: { fgColor: { rgb: "4F46E5" } },
-        alignment: { horizontal: "center" }
-      };
-      
-      // Aplicar estilo a los headers
-      const headerRange = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-      for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
-        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
-        if (!ws[cellAddress]) continue;
-        ws[cellAddress].s = headerStyle;
-      }
-      
-      // Si es el template de métricas, aplicar estilo a la fila de descripciones
-      if (sheetName === 'Métricas del Evento') {
-        const descriptionStyle = {
-          font: { italic: true },
-          fill: { fgColor: { rgb: "F3F4F6" } }
-        };
-        
-        for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
-          const cellAddress = XLSX.utils.encode_cell({ r: 1, c: col });
-          if (!ws[cellAddress]) continue;
-          ws[cellAddress].s = descriptionStyle;
-        }
-      }
-      
-      // Agregar la hoja al workbook
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
       
-      // Generar el archivo y descargarlo
       const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
       const blob = new Blob([excelBuffer], { 
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
@@ -234,7 +271,7 @@ export function ImportDataForm({
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error generating Excel file:', error);
       throw error;
     }
@@ -262,16 +299,10 @@ export function ImportDataForm({
             <div className="bg-element p-4 rounded-lg">
               <h3 className="font-medium text-text mb-2">Importar Lista de Asistentes</h3>
               <p className="text-sm text-textSecondary mb-3">
-                Importa información de múltiples asistentes al evento. Cada fila representa un asistente diferente.
+                <strong>✅ CSV de lu.ma completamente soportado</strong> - Solo necesitas subir el archivo tal como lo descargas.
+                <br />
+                Automáticamente extraemos nombre y email de cada asistente.
               </p>
-              <div className="text-sm text-textSecondary">
-                <strong>Campos disponibles:</strong>
-                <ul className="list-disc list-inside mt-1 ml-4">
-                  <li><strong>name</strong> (requerido): Nombre completo del asistente</li>
-                  <li><strong>email</strong> (requerido): Correo electrónico del asistente</li>
-                  <li><strong>walletAddress</strong> (opcional): Dirección de wallet del asistente</li>
-                </ul>
-              </div>
               <Button
                 type="button"
                 variant="outline"
@@ -280,7 +311,7 @@ export function ImportDataForm({
                 className="mt-3"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Descargar Template Excel
+                Descargar Template Excel (opcional)
               </Button>
             </div>
           </TabsContent>
@@ -291,18 +322,6 @@ export function ImportDataForm({
               <p className="text-sm text-textSecondary mb-3">
                 Importa métricas generales del evento. Solo se necesita una fila con los valores totales del evento.
               </p>
-              <div className="text-sm text-textSecondary">
-                <strong>Campos disponibles:</strong>
-                <ul className="list-disc list-inside mt-1 ml-4 space-y-1">
-                  <li><strong>confirmedAttendees:</strong> Número de asistentes confirmados</li>
-                  <li><strong>totalAttendees:</strong> Número total de asistentes</li>
-                  <li><strong>newWallets:</strong> Número de wallets creadas</li>
-                  <li><strong>totalCost:</strong> Costo total del evento</li>
-                  <li><strong>virtualEngagement:</strong> Porcentaje de engagement virtual</li>
-                  <li><strong>marketingChannels:</strong> Canales de marketing (separados por ;)</li>
-                  <li>Y más campos de métricas...</li>
-                </ul>
-              </div>
               <Button
                 type="button"
                 variant="outline"
@@ -317,11 +336,11 @@ export function ImportDataForm({
           </TabsContent>
         </Tabs>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-6">
+        <form onSubmit={onSubmit} className="space-y-4 mt-6">
           <div 
             className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
               dragActive ? "border-primary bg-primary/10" : "border-element"
-            } ${errors.file ? "border-error" : ""}`}
+            } ${fileError ? "border-error" : ""}`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
@@ -334,7 +353,10 @@ export function ImportDataForm({
                   <div>
                     <div className="font-medium text-text">{selectedFile.name}</div>
                     <div className="text-sm text-textSecondary">
-                      {(selectedFile.size / 1024).toFixed(2)} KB
+                      {(selectedFile.size / 1024).toFixed(2)} KB • {selectedFile.type || 'unknown type'}
+                    </div>
+                    <div className="text-xs text-green-600 mt-1">
+                      ✅ Archivo válido - Listo para importar
                     </div>
                   </div>
                 </div>
@@ -351,10 +373,13 @@ export function ImportDataForm({
               <div className="text-center">
                 <Upload className="w-12 h-12 text-textSecondary mx-auto mb-3" />
                 <p className="text-text mb-2">
-                  Arrastra y suelta tu archivo CSV o Excel
+                  Arrastra y suelta tu archivo CSV o Excel aquí
                 </p>
                 <p className="text-sm text-textSecondary mb-4">
-                  Archivo de {importType === 'attendees' ? 'asistentes' : 'métricas del evento'}
+                  {importType === 'attendees' 
+                    ? '📋 Sube tu CSV de lu.ma directamente' 
+                    : '📊 Archivo de métricas del evento'
+                  }
                 </p>
                 <Button
                   type="button"
@@ -368,28 +393,36 @@ export function ImportDataForm({
             <input
               id="file-upload"
               type="file"
-              accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+              accept=".csv, .xlsx, .xls, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv"
               className="hidden"
-              {...register("file")}
               onChange={handleFileChange}
             />
           </div>
           
-          {errors.file && (
+          {fileError && (
             <div className="flex items-center text-error text-sm">
               <AlertCircle className="w-4 h-4 mr-1" />
-              <span>{errors.file.message}</span>
+              <span>{fileError}</span>
             </div>
           )}
           
           <div className="flex justify-end">
             <Button
               type="submit"
-              isLoading={isLoading}
-              disabled={!selectedFile || isLoading}
-              leftIcon={<Check className="w-4 h-4" />}
+              disabled={!selectedFile || isLoading || !!fileError}
+              className="min-w-[140px]"
             >
-              {isLoading ? 'Importando...' : `Importar ${importType === 'attendees' ? 'Asistentes' : 'Métricas'}`}
+              {isLoading ? (
+                <div className="flex items-center">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Importando...
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <Check className="w-4 h-4 mr-2" />
+                  Importar {importType === 'attendees' ? 'Asistentes' : 'Métricas'}
+                </div>
+              )}
             </Button>
           </div>
         </form>

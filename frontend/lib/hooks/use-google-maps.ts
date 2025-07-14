@@ -33,7 +33,7 @@ export function useGoogleMaps() {
       libraries: ['places'], // Incluir todas las librerías necesarias
     });
 
-    loadPromise = loader.load();
+    loadPromise = loader.load() as unknown as Promise<void>;
     
     loadPromise
       .then(() => {

@@ -33,7 +33,7 @@ export default function CreateEventPage() {
       
       <PageHeader
         title="Create Event"
-        description="Create a new blockchain event"
+        subtitle="Create a new blockchain event"
       />
       
       <EventForm onSubmit={handleSubmit} />

@@ -36,11 +36,6 @@ export function ComparisonChart() {
     totalCosts: 0
   };
   
-  // Get event types
-  const eventTypes = metrics.eventByType.map(type => type._id);
-  
-  // Create dynamic comparison data based on general metrics
-  // This simulates data that would normally come from the API
   const comparisonData = [
     {
       category: "Average attendees",
@@ -80,7 +75,7 @@ export function ComparisonChart() {
         <div className="flex space-x-2">
           <select
             value={metric}
-            onChange={(e) => setMetric(e.target.value as any)}
+            onChange={(e) => setMetric(e.target.value as "attendees" | "wallets" | "cost")}
             className="bg-card border border-element rounded text-sm px-2 py-1 text-text cursor-pointer"
           >
             <option value="wallets">Wallets</option>

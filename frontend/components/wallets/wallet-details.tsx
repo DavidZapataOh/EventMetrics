@@ -5,8 +5,6 @@ import {
   Wallet, 
   DollarSign, 
   TrendingUp, 
-  Calendar, 
-  Activity, 
   Award,
   ExternalLink,
   Copy
@@ -15,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { WalletInfo } from '@/types/wallet';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { useToast } from '@/lib/hooks/use-toast';
 
 interface WalletDetailsProps {
@@ -23,14 +21,11 @@ interface WalletDetailsProps {
 }
 
 export function WalletDetails({ wallet }: WalletDetailsProps) {
-  const { toast } = useToast();
+  const { success } = useToast();
 
   const copyAddress = () => {
     navigator.clipboard.writeText(wallet.address);
-    toast({
-      title: 'Copiado',
-      description: 'Dirección copiada al portapapeles',
-    });
+    success('Dirección copiada al portapapeles');
   };
 
   const openInExplorer = (hash: string, network: 'avalanche' | 'fuji') => {
@@ -38,12 +33,6 @@ export function WalletDetails({ wallet }: WalletDetailsProps) {
       ? 'https://snowtrace.io'
       : 'https://testnet.snowtrace.io';
     window.open(`${explorerUrl}/tx/${hash}`, '_blank');
-  };
-
-  const getActivityScoreColor = (score: number) => {
-    if (score >= 80) return 'text-success';
-    if (score >= 50) return 'text-warning';
-    return 'text-error';
   };
 
   return (
@@ -95,10 +84,10 @@ export function WalletDetails({ wallet }: WalletDetailsProps) {
             <div className="flex flex-col items-center text-center">
               <DollarSign className="w-8 h-8 text-primary mb-2" />
               <div className="text-xl font-bold text-text">
-                {wallet.balance.avax.toFixed(4)} AVAX
+                {wallet.balance.native.avax.toFixed(4)} AVAX
               </div>
               <p className="text-sm text-textSecondary">
-                ≈ ${wallet.balance.usd.toFixed(2)}
+                ≈ ${wallet.balance.native.usd.toFixed(2)}
               </p>
             </div>
           </CardContent>
@@ -170,7 +159,7 @@ export function WalletDetails({ wallet }: WalletDetailsProps) {
                 <div key={tx.hash} className="flex items-center justify-between p-3 bg-element rounded-lg">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2">
-                      <Badge variant={tx.network === 'avalanche' ? 'primary' : 'secondary'}>
+                      <Badge variant={tx.network === 'avalanche' ? 'default' : 'secondary'}>
                         {tx.network === 'avalanche' ? 'Mainnet' : 'Fuji'}
                       </Badge>
                       <p className="text-sm font-mono truncate">

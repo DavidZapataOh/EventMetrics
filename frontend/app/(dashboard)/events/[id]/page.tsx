@@ -11,14 +11,14 @@ import { ImportDataForm } from "@/components/events/import-data-form";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash, RefreshCw } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
-import { useEvents } from "@/lib/hooks/use-events";
+import { useEvents, useEvent } from "@/lib/hooks/use-events";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
   const router = useRouter();
-  const { eventQuery, deleteEvent, importEventData, refetchEvent } = useEvents();
-  const { data: event, isLoading, isError, error } = eventQuery(id);
+  const { deleteEvent, importEventData, refetchEvent } = useEvents();
+  const { data: event, isLoading, isError, error } = useEvent(id);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -36,9 +36,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const handleImport = async (eventId: string, file: File) => {
+  const handleImport = async (eventId: string, file: File, type: 'attendees' | 'metrics' = 'attendees') => {
     try {
-      await importEventData({ id: eventId, file });
+      console.log('📥 handleImport called with:', { eventId, fileName: file.name, type });
+      // Llamar correctamente con parámetros separados
+      await importEventData(eventId, file, type);
       // Los datos se actualizarán automáticamente gracias a React Query
     } catch (error) {
       console.error("Error importing data:", error);
@@ -63,7 +65,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   if (isError || !event) {
-    const errorMessage = error?.response?.data?.message || 'Error loading event';
+    const errorMessage = (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Error loading event';
     
     return (
       <div className="flex flex-col items-center justify-center h-[80vh]">

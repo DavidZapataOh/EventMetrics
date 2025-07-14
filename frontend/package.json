@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.8",
+    "@radix-ui/react-tabs": "^1.1.12",
     "@types/web3": "^1.0.20",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.8.4",

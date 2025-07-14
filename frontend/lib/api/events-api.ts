@@ -3,7 +3,7 @@ import { Event, EventFormData } from '@/types/event';
 import { ApiResponse, PaginatedResponse, QueryParams } from '@/types/api';
 
 export const getEvents = async (params?: QueryParams): Promise<PaginatedResponse<Event>> => {
-  const response = await apiClient.get<ApiResponse<{ data: Event[], pagination: any }>>('/events', { params });
+  const response = await apiClient.get<ApiResponse<{ data: Event[], pagination: { page: number, limit: number, total: number, totalPages: number } }>>('/events', { params });
   
   if (response.data.success && response.data.data) {
     return {
@@ -162,20 +162,77 @@ export const deleteEvent = async (id: string): Promise<void> => {
   await apiClient.delete(`/events/${id}`);
 };
 
-export const importEventData = async (id: string, file: File): Promise<Event> => {
+export const importEventData = async (id: string, file: File, importType = 'attendees'): Promise<Event> => {
+  console.log('=== IMPORT EVENT DATA API CALLED ===');
+  console.log('Parameters received:', { 
+    id, 
+    file: file ? { name: file.name, size: file.size, type: file.type } : 'undefined/null',
+    importType 
+  });
+
+  // Validación básica antes de enviar
+  if (!file) {
+    console.error('❌ File is missing or undefined');
+    throw new Error('No se ha seleccionado ningún archivo');
+  }
+  
+  if (!id) {
+    console.error('❌ Event ID is missing');
+    throw new Error('ID del evento requerido');
+  }
+
+  console.log('✅ Validation passed, creating FormData...');
+  
   const formData = new FormData();
   formData.append('file', file);
   formData.append('eventId', id);
+  formData.append('importType', importType);
   
-  const response = await apiClient.post<ApiResponse<Event>>('/events/import', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  
-  if (response.data.success && response.data.data) {
-    return response.data.data;
+  // Debug FormData
+  console.log('FormData entries:');
+  for (const [key, value] of formData.entries()) {
+    if (value instanceof File) {
+      console.log(`${key}:`, { name: value.name, size: value.size, type: value.type });
+    } else {
+      console.log(`${key}:`, value);
+    }
   }
   
-  throw new Error('Import failed');
+  try {
+    console.log('🚀 Sending request to /import/events...');
+    const response = await apiClient.post<ApiResponse<Event>>('/import/events', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000,
+    });
+    
+    console.log('✅ Import response:', response.data);
+    
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    
+    throw new Error(response.data.message || 'Import failed');
+  } catch (error: unknown) {
+    console.error('❌ Import error details:', {
+      message: (error as Error).message,
+      response: (error as { response?: { data?: { message?: string } } }).response?.data,
+      status: (error as { response?: { status?: number } }).response?.status
+    });
+    
+    if ((error as { response?: { data?: { message?: string } } }).response?.data?.message) {
+      throw new Error((error as { response?: { data?: { message?: string } } }).response?.data?.message);
+    }
+    
+    if ((error as { response?: { status?: number } }).response?.status === 400) {
+      throw new Error('Error en los datos del archivo. Verifica que el formato sea correcto.');
+    }
+    
+    if ((error as { response?: { status?: number } }).response?.status === 404) {
+      throw new Error('Evento no encontrado o ruta de importación no disponible.');
+    }
+    
+    throw new Error((error as Error).message || 'Error desconocido al importar datos');
+  }
 };

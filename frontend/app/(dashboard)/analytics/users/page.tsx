@@ -30,7 +30,7 @@ export default function UsersAnalyticsPage() {
       
       <PageHeader 
         title="User Performance" 
-        description="Analytics by user performance and metrics"
+        subtitle="Analytics by user performance and metrics"
       />
       
       <UserMetricsTable metrics={userMetricsQuery.data} />

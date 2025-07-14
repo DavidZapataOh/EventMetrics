@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Mail, Lock, User, Map } from "lucide-react";
+import { Mail, Lock, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -39,7 +39,7 @@ export function RegisterForm() {
     try {
       await registerUser(data);
       router.push("/dashboard");
-    } catch (error) {
+    } catch {
       // Error handled in the useAuth hook
     }
   };
@@ -50,7 +50,7 @@ export function RegisterForm() {
         <Input
           id="handle"
           label="Username"
-          icon={<User className="w-4 h-4 text-textSecondary" />}
+          leftIcon={<User className="w-4 h-4 text-textSecondary" />}
           error={errors.handle?.message}
           {...register("handle")}
         />
@@ -60,7 +60,7 @@ export function RegisterForm() {
         <Input
           id="name"
           label="Full name"
-          icon={<User className="w-4 h-4 text-textSecondary" />}
+          leftIcon={<User className="w-4 h-4 text-textSecondary" />}
           error={errors.name?.message}
           {...register("name")}
         />
@@ -71,7 +71,7 @@ export function RegisterForm() {
           id="email"
           label="Email"
           type="email"
-          icon={<Mail className="w-4 h-4 text-textSecondary" />}
+          leftIcon={<Mail className="w-4 h-4 text-textSecondary" />}
           error={errors.email?.message}
           {...register("email")}
         />
@@ -82,7 +82,7 @@ export function RegisterForm() {
           id="password"
           label="Password"
           type="password"
-          icon={<Lock className="w-4 h-4 text-textSecondary" />}
+          leftIcon={<Lock className="w-4 h-4 text-textSecondary" />}
           error={errors.password?.message}
           {...register("password")}
         />
@@ -93,7 +93,6 @@ export function RegisterForm() {
           id="region"
           label="Region"
           options={REGIONS}
-          icon={<Map className="w-4 h-4 text-textSecondary" />}
           error={errors.region?.message}
           {...register("region")}
         />

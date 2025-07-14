@@ -19,7 +19,7 @@ export function useToast() {
     toast.info(message);
   };
 
-  const showLoading = (message: string, promise: Promise<any>, options?: {
+  const showLoading = (message: string, promise: Promise<unknown>, options?: {
     success?: string;
     error?: string;
   }) => {

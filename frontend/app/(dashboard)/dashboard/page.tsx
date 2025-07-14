@@ -137,9 +137,6 @@ export default function DashboardPage() {
         <EventsTable 
           events={events} 
           isLoading={eventsQuery.isLoading}
-          onDelete={(id) => {
-            // implemented in the component
-          }}
         />
       </div>
     </div>

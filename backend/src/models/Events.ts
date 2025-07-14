@@ -98,7 +98,7 @@ const eventSchema = new Schema({
     location: {
         address: {
             type: String,
-            required: function() {
+            required: function(this: any) {
                 return this.type === 'in-person' || this.type === 'hybrid';
             }
         },
@@ -107,13 +107,13 @@ const eventSchema = new Schema({
         coordinates: {
             lat: {
                 type: Number,
-                required: function() {
+                required: function(this: any) {
                     return this.type === 'in-person' || this.type === 'hybrid';
                 }
             },
             lng: {
                 type: Number,
-                required: function() {
+                required: function(this: any) {
                     return this.type === 'in-person' || this.type === 'hybrid';
                 }
             }

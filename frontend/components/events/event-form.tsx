@@ -1,14 +1,15 @@
 "use client";
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Event, EventFormData } from "@/types/event";
+import { Event, EventFormData, EventLocation } from "@/types/event";
 import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Select } from "../ui/select";
 import { LocationPicker } from "./location-picker";
 import { Upload, Calendar, X, Plus, Target, Tag, Clock, MapPin } from "lucide-react";
+import Image from "next/image";
 
 interface EventFormProps {
   defaultValues?: Partial<EventFormData>;
@@ -53,7 +54,7 @@ export function EventForm({
   const [kpis, setKpis] = React.useState<string[]>(defaultValues?.kpis || []);
   const [newKpi, setNewKpi] = React.useState("");
   const [logoPreview, setLogoPreview] = React.useState<string | null>(null);
-  const [selectedLocation, setSelectedLocation] = React.useState<any>(null);
+  const [selectedLocation, setSelectedLocation] = React.useState<EventLocation | null>(null);
 
   const watchedType = watch("type");
 
@@ -63,7 +64,7 @@ export function EventForm({
       reset(defaultValues);
       setObjectives(defaultValues.objectives || []);
       setKpis(defaultValues.kpis || []);
-      setSelectedLocation(defaultValues.location || null);
+      setSelectedLocation(defaultValues.location as EventLocation | null);
       
       // Para modo edición, mostrar la imagen actual si existe
       if (event?.logoUrl) {
@@ -109,7 +110,7 @@ export function EventForm({
     setKpis(kpis.filter((_, i) => i !== index));
   };
 
-  const handleLocationSelect = (location: any) => {
+  const handleLocationSelect = (location: EventLocation) => {
     setSelectedLocation(location);
     setValue('location', location);
   };
@@ -123,7 +124,7 @@ export function EventForm({
     };
     
     console.log('Sending form data:', formData); // Para debug
-    onSubmit(formData);
+    onSubmit(formData as EventFormData);
   };
 
   // Generar opciones de zona horaria
@@ -224,7 +225,7 @@ export function EventForm({
                 <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-element rounded-lg cursor-pointer hover:border-primary transition-colors">
                   {logoPreview ? (
                     <div className="relative w-full h-full">
-                      <img
+                      <Image
                         src={logoPreview}
                         alt="Vista previa del logo"
                         className="w-full h-full object-cover rounded-lg"
