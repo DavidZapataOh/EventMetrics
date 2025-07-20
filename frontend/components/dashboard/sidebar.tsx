@@ -85,7 +85,7 @@ export function Sidebar() {
     <div className="flex flex-col h-full bg-card border-r border-element w-64">
       <div className="p-6">
         <div className="flex items-center space-x-2">
-          <Image src="/logo.svg" alt="Logo" width={32} height={32} />
+          <Image src="/em.jpg" alt="Logo" width={48} height={48} className="rounded-full"/>
           <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">
             EventMetrics
           </h1>

@@ -1,5 +1,9 @@
 import * as z from 'zod';
 
+const fileValidator = typeof File !== 'undefined'
+  ? z.instanceof(File, { message: 'You must select a file' })
+  : z.any()
+
 // Validation for login form
 export const loginSchema = z.object({
   email: z.string().email({ message: 'Enter a valid email' }),
@@ -91,5 +95,5 @@ export const profileSchema = z.object({
 
 // Validation for data import
 export const importDataSchema = z.object({
-  file: z.instanceof(File, { message: 'You must select a file' }),
-});
+  file: fileValidator,
+})
