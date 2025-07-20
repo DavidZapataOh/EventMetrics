@@ -7,6 +7,9 @@
     "react/no-unescaped-entities": "error",
     "@next/next/no-img-element": "warn",
     "react-hooks/exhaustive-deps": "warn",
-    "@typescript-eslint/no-empty-object-type": "error"
+    "@typescript-eslint/no-empty-object-type": "error",
+    "semi": ["error", "never"],
+    "@typescript-eslint/semi": ["error", "never"],
+    "prettier/prettier": ["error", { "semi": false }]
   }
 } 

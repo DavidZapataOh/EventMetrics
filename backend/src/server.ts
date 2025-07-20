@@ -13,10 +13,11 @@ import analyticsRoutes from './routes/api/analytics'
 import web3Routes from './routes/api/web3'
 import walletsRoutes from './routes/api/wallets'
 import importRoutes from './routes/api/import'
+import metricsRoutes from './routes/api/metrics';
 
 configureSecurityMiddleware(app)
 
-const whitelistDev = [process.env.FRONTEND_URL_DEV || 'http://localhost:3001'];
+const whitelistDev = [process.env.FRONTEND_URL_DEV || 'http://localhost:3000'];
 const whitelistProd = [process.env.FRONTEND_URL_PROD || 'https://www.example.com'];
 
 app.use(cors({
@@ -50,6 +51,7 @@ const initializeServer = async () => {
         app.use('/api/web3', web3Routes)
         app.use('/api/wallets', walletsRoutes)
         app.use('/api/import', importRoutes)
+        app.use('/api/metrics', metricsRoutes);
     } catch (error) {
         console.log(error)
         process.exit(1)

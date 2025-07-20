@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -21,7 +21,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="flex justify-center mb-4">
-            <Image src="/logo.svg" alt="Logo" width={48} height={48} />
+            <Image src="/em.jpg" alt="Logo" width={48} height={48} className="rounded-full w-16 h-16"/>
           </div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">
             EventMetrics
