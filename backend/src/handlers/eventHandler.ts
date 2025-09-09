@@ -13,8 +13,7 @@ const getEvents = async (req: any, res: any) => {
         const limitNum = parseInt(limit);
         const skip = (pageNum - 1) * limitNum;
 
-        // Construir query de búsqueda
-        let query: any = { creator: req.user._id };
+        let query: any = { organizationId: req.user.currentOrganizationId };
         
         if (search) {
             query.$or = [
@@ -23,14 +22,12 @@ const getEvents = async (req: any, res: any) => {
             ];
         }
 
-        // Obtener eventos con paginación
         const events = await Event.find(query)
             .populate('creator', 'name email')
             .sort(sort)
             .skip(skip)
             .limit(limitNum);
 
-        // Agregar URLs firmadas para las imágenes
         const eventsWithSignedUrls = await Promise.all(
             events.map(async (event) => {
                 const eventObj = event.toObject() as any;
@@ -41,7 +38,6 @@ const getEvents = async (req: any, res: any) => {
             })
         );
 
-        // Contar total de eventos
         const total = await Event.countDocuments(query);
         const totalPages = Math.ceil(total / limitNum);
 
@@ -73,7 +69,6 @@ const getEventById = async (req: any, res: any) => {
     try {
         const { id } = req.params;
         
-        // Validar ObjectId
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ 
                 success: false,
@@ -90,7 +85,6 @@ const getEventById = async (req: any, res: any) => {
             });
         }
 
-        // Verificar que el usuario tenga acceso al evento
         if (event.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 success: false,
@@ -98,7 +92,6 @@ const getEventById = async (req: any, res: any) => {
             });
         }
 
-        // Agregar URL firmada para la imagen
         const eventObj = event.toObject() as any;
         if (eventObj.logo && eventObj.logo.key) {
             eventObj.logoUrl = await getSignedUrl(eventObj.logo.key);
@@ -124,10 +117,8 @@ const createEvent = async (req: any, res: any) => {
         console.log('Location received:', req.body.location);
         console.log('Location type:', typeof req.body.location);
 
-        // Procesar arrays y objetos que vienen como strings JSON
         const processedBody = { ...req.body };
         
-        // Función helper para procesar arrays
         const processArray = (value: any) => {
             if (Array.isArray(value)) {
                 return value;
@@ -144,7 +135,6 @@ const createEvent = async (req: any, res: any) => {
             return [];
         };
 
-        // Función helper para procesar objetos
         const processObject = (value: any) => {
             if (typeof value === 'object' && value !== null) {
                 return value;
@@ -160,13 +150,11 @@ const createEvent = async (req: any, res: any) => {
             return null;
         };
 
-        // Procesar arrays específicos
         processedBody.objectives = processArray(processedBody.objectives);
         processedBody.kpis = processArray(processedBody.kpis);
         processedBody.specialGuests = processArray(processedBody.specialGuests);
         processedBody.openedWalletAddresses = processArray(processedBody.openedWalletAddresses);
 
-        // Procesar objetos complejos
         if (processedBody.location) {
             processedBody.location = processObject(processedBody.location);
             console.log('Processed location:', processedBody.location);
@@ -191,11 +179,11 @@ const createEvent = async (req: any, res: any) => {
         const eventData = {
             ...processedBody,
             creator: req.user._id,
+            organizationId: req.user.currentOrganizationId,
             createdAt: new Date(),
             updatedAt: new Date()
         };
 
-        // Si hay archivo subido, agregar información del logo
         if (req.file) {
             eventData.logo = {
                 key: req.file.key,
@@ -210,10 +198,8 @@ const createEvent = async (req: any, res: any) => {
         const newEvent = new Event(eventData);
         const savedEvent = await newEvent.save();
         
-        // Populate creator info
         await savedEvent.populate('creator', 'name email');
 
-        // Agregar URL firmada para la imagen
         const eventObj = savedEvent.toObject() as any;
         if (eventObj.logo && eventObj.logo.key) {
             try {
@@ -257,7 +243,9 @@ const updateEvent = async (req: any, res: any) => {
             });
         }
         
-        if (event.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        if (event.creator.toString() !== req.user._id.toString() && 
+            event.organizationId.toString() !== req.user.currentOrganizationId.toString() && 
+            req.user.role !== 'admin') {
             return res.status(403).json({ 
                 success: false,
                 message: 'Access denied' 
@@ -269,9 +257,7 @@ const updateEvent = async (req: any, res: any) => {
             updatedAt: new Date()
         };
 
-        // Si hay nuevo archivo subido, eliminar el anterior y agregar el nuevo
         if (req.file) {
-            // Eliminar imagen anterior si existe
             if (event.logo && event.logo.key) {
                 try {
                     await deleteFromS3(event.logo.key);
@@ -280,7 +266,6 @@ const updateEvent = async (req: any, res: any) => {
                 }
             }
 
-            // Agregar nueva imagen
             updateData.logo = {
                 key: req.file.key,
                 originalName: req.file.originalname,
@@ -295,7 +280,6 @@ const updateEvent = async (req: any, res: any) => {
             { new: true, runValidators: true }
         ).populate('creator', 'name email');
 
-        // Agregar URL firmada para la imagen
         const eventObj = updatedEvent!.toObject() as any;
         if (eventObj.logo && eventObj.logo.key) {
             eventObj.logoUrl = await getSignedUrl(eventObj.logo.key);
@@ -335,14 +319,15 @@ const deleteEvent = async (req: any, res: any) => {
             });
         }
         
-        if (event.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        if (event.creator.toString() !== req.user._id.toString() && 
+            event.organizationId.toString() !== req.user.currentOrganizationId.toString() && 
+            req.user.role !== 'admin') {
             return res.status(403).json({ 
                 success: false,
                 message: 'Access denied' 
             });
         }
 
-        // Eliminar imagen de S3 si existe
         if (event.logo && event.logo.key) {
             try {
                 await deleteFromS3(event.logo.key);
@@ -414,7 +399,9 @@ const importEventData = async (req: any, res: any) => {
             });
         }
         
-        if (event.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        if (event.creator.toString() !== req.user._id.toString() && 
+            event.organizationId.toString() !== req.user.currentOrganizationId.toString() && 
+            req.user.role !== 'admin') {
             return res.status(403).json({ 
                 success: false,
                 message: 'Access denied' 
@@ -447,9 +434,8 @@ const importEventData = async (req: any, res: any) => {
                 });
             }
 
-            // Procesar según el tipo de importación
             let processedData;
-            if (importType === 'attendees' || !importType) { // Default a attendees
+            if (importType === 'attendees' || !importType) {
                 processedData = processLumaAttendeesData(data);
             } else if (importType === 'metrics') {
                 processedData = processMetricsData(data);
@@ -504,7 +490,6 @@ const processAttendeesData = (data: any[]) => {
     
     const registeredAttendees = data
         .filter(row => {
-            // Verificar que tenga email y al menos un nombre
             const hasEmail = row.email && row.email.trim();
             const hasName = (row.name && row.name.trim()) || 
                            (row.first_name && row.first_name.trim()) || 
@@ -512,14 +497,11 @@ const processAttendeesData = (data: any[]) => {
             return hasEmail && hasName;
         })
         .map(row => {
-            // Construir el nombre completo
             let fullName = '';
             
             if (row.name && row.name.trim()) {
-                // Si ya tiene nombre completo, usarlo
                 fullName = row.name.trim();
             } else {
-                // Construir desde first_name y last_name
                 const firstName = row.first_name ? row.first_name.trim() : '';
                 const lastName = row.last_name ? row.last_name.trim() : '';
                 fullName = `${firstName} ${lastName}`.trim();
@@ -528,13 +510,12 @@ const processAttendeesData = (data: any[]) => {
             const attendee = {
                 name: fullName,
             email: row.email.trim(),
-                walletAddress: '', // lu.ma no incluye wallet por defecto
+                walletAddress: '',
                 registrationDate: row.created_at || new Date().toISOString(),
                 approvalStatus: row.approval_status || 'approved',
                 checkedIn: !!row.checked_in_at,
                 ticketType: row.ticket_name || 'General',
                 source: 'luma',
-                // Campos adicionales de lu.ma que podrían ser útiles
                 lumaData: {
                     apiId: row.api_id,
                     phone: row.phone_number || '',
@@ -558,12 +539,10 @@ const processAttendeesData = (data: any[]) => {
 const processMetricsData = (data: any[]) => {
     const processedData: any = {};
     
-    // Tomar la primera fila con datos (debería ser la única)
     const metricsRow = data[0];
     
     if (!metricsRow) return processedData;
     
-    // Procesar métricas numéricas
     const numericFields = [
         'confirmedAttendees', 'totalAttendees', 'attendeesWithCertificate',
         'previosEventAttendees', 'newWallets', 'transactionsAfterEvent',
@@ -576,7 +555,6 @@ const processMetricsData = (data: any[]) => {
         }
     });
     
-    // Métricas virtuales
     if (metricsRow.virtualEngagement || metricsRow.virtualConnectionTime) {
         processedData.virtualMetrics = {};
         if (metricsRow.virtualEngagement) {
@@ -587,7 +565,6 @@ const processMetricsData = (data: any[]) => {
         }
     }
     
-    // Marketing
     if (metricsRow.marketingChannels || metricsRow.marketingCampaign) {
         processedData.marketing = {};
         if (metricsRow.marketingChannels) {
@@ -601,7 +578,6 @@ const processMetricsData = (data: any[]) => {
         }
     }
     
-    // Arrays separados por punto y coma
     if (metricsRow.specialGuests) {
         processedData.specialGuests = metricsRow.specialGuests
             .split(';')
@@ -619,14 +595,12 @@ const processMetricsData = (data: any[]) => {
     return processedData;
 }
         
-// Reemplazar la función processLumaCsvFile con esta versión más robusta:
 
 const processLumaCsvFile = (filePath: string) => {
     return new Promise((resolve, reject) => {
         try {
             console.log(`🔍 Processing CSV file with manual parser: ${filePath}`);
             
-            // Leer el archivo completo como string
             const fileContent = fs.readFileSync(filePath, 'utf-8');
             const lines = fileContent.split('\n');
             
@@ -639,13 +613,11 @@ const processLumaCsvFile = (filePath: string) => {
                 return;
             }
             
-            // Parsear headers manualmente
             const headerLine = lines[0];
             const headers = parseCSVLine(headerLine);
             
             console.log(`📊 Found ${headers.length} headers:`, headers.slice(0, 10));
             
-            // Buscar los índices de las columnas que necesitamos
             const emailIndex = findColumnIndex(headers, ['email']);
             const nameIndex = findColumnIndex(headers, ['name']);
             const firstNameIndex = findColumnIndex(headers, ['first_name']);
@@ -672,15 +644,14 @@ const processLumaCsvFile = (filePath: string) => {
             
             const results = [];
             
-            // Procesar cada línea de datos (saltando la cabecera)
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
-                if (!line) continue; // Saltar líneas vacías
+                if (!line) continue;
                 
                 try {
                     const values = parseCSVLine(line);
                     
-                    if (values.length < headers.length - 5) { // Permitir algunas columnas faltantes
+                    if (values.length < headers.length - 5) {
                         console.log(`⚠️ Row ${i} has too few columns, skipping`);
                         continue;
                     }
@@ -690,7 +661,6 @@ const processLumaCsvFile = (filePath: string) => {
                     const firstName = values[firstNameIndex]?.trim() || '';
                     const lastName = values[lastNameIndex]?.trim() || '';
                     
-                    // Validar que tenga email y al menos un nombre
                     if (!email || !email.includes('@')) {
                         if (i <= 5) console.log(`❌ Row ${i}: Invalid email: "${email}"`);
                         continue;
@@ -701,7 +671,6 @@ const processLumaCsvFile = (filePath: string) => {
                         continue;
                     }
                     
-                    // Construir objeto de datos
                     const rowData = {
                         api_id: values[apiIdIndex]?.trim() || '',
                         email: email,
@@ -740,7 +709,6 @@ const processLumaCsvFile = (filePath: string) => {
     });
 };
 
-// Función helper para parsear una línea CSV manualmente
 function parseCSVLine(line: string): string[] {
     const result = [];
     let current = '';
@@ -753,16 +721,13 @@ function parseCSVLine(line: string): string[] {
         
         if (char === '"') {
             if (inQuotes && nextChar === '"') {
-                // Escaped quote
                 current += '"';
                 i += 2;
             } else {
-                // Toggle quote state
                 inQuotes = !inQuotes;
                 i++;
             }
         } else if (char === ',' && !inQuotes) {
-            // End of field
             result.push(current);
             current = '';
             i++;
@@ -772,13 +737,11 @@ function parseCSVLine(line: string): string[] {
         }
     }
     
-    // Add the last field
     result.push(current);
     
     return result;
 }
 
-// Función helper para encontrar índice de columna
 function findColumnIndex(headers: string[], possibleNames: string[]): number {
     for (const name of possibleNames) {
         const index = headers.findIndex(h => 
@@ -790,7 +753,6 @@ function findColumnIndex(headers: string[], possibleNames: string[]): number {
     return -1;
 }
 
-// Actualizar processLumaAttendeesData para ser aún más robusto:
 
 const processLumaAttendeesData = (data: any[]) => {
     console.log('🔄 Processing lu.ma attendees data');
@@ -808,7 +770,6 @@ const processLumaAttendeesData = (data: any[]) => {
     
     const registeredAttendees = data
         .filter((row, index) => {
-            // Verificar email válido
             const hasValidEmail = row.email && 
                                 typeof row.email === 'string' && 
                                 row.email.trim().length > 0 &&
@@ -820,7 +781,6 @@ const processLumaAttendeesData = (data: any[]) => {
                 return false;
             }
             
-            // Verificar nombre
             const hasName = (row.name && row.name.trim()) || 
                            (row.first_name && row.first_name.trim()) || 
                            (row.last_name && row.last_name.trim());
@@ -838,7 +798,6 @@ const processLumaAttendeesData = (data: any[]) => {
             return true;
         })
         .map((row, index) => {
-            // Construir nombre completo
             let fullName = '';
             
             if (row.name && row.name.trim()) {
@@ -899,7 +858,6 @@ const processExcelFile = (filePath: string) => {
                 return;
             }
             
-            // Convertir a formato de objetos usando la primera fila como headers
             const headers = data[0] as string[];
             const results = [];
             

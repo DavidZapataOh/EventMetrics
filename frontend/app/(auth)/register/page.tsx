@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { RegisterForm } from "@/components/auth/register-form";
 import { useAuth } from "@/lib/hooks/use-auth";
-import Image from "next/image";
+import { BarChart3 } from "lucide-react";
 
 export default function RegisterPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -17,24 +17,26 @@ export default function RegisterPage() {
   }, [isLoading, isAuthenticated, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="flex justify-center mb-4">
-            <Image src="/logo.svg" alt="Logo" width={48} height={48} />
+            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-6 h-6 text-white" />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">
+          <h1 className="text-2xl font-bold text-blue-600">
             EventMetrics
           </h1>
-          <h2 className="mt-2 text-xl font-semibold text-text">
+          <h2 className="mt-2 text-xl font-semibold text-white">
             Create your account
           </h2>
-          <p className="mt-2 text-sm text-textSecondary">
+          <p className="mt-2 text-sm text-slate-300">
             Start tracking your blockchain events now
           </p>
         </div>
 
-        <div className="bg-card p-6 rounded-lg shadow-md border border-element">
+        <div className="bg-slate-900 p-6 rounded-lg shadow-2xl border border-slate-800">
           <RegisterForm />
         </div>
       </div>

@@ -1,3 +1,5 @@
+import { Organization } from "./organization";
+
 export interface User {
     _id: string;
     handle: string;
@@ -6,12 +8,16 @@ export interface User {
     role: 'admin' | 'user';
     region: string;
     profilePicture?: string;
+    currentOrganizationId?: string;
     createdAt: string;
     updatedAt: string;
 }
   
 export interface AuthUser extends User {
     token: string;
+    currentOrganizationId?: string;
+    organizations?: Organization[];
+    currentOrganization?: Organization;
 }
   
 export interface LoginCredentials {

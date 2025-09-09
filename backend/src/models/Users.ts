@@ -7,6 +7,7 @@ interface IUser {
     password: string
     role: string
     region: string
+    currentOrganizationId?: mongoose.Types.ObjectId
     profilePicture: string
     createdAt: Date
     updatedAt: Date
@@ -46,6 +47,10 @@ const userSchema = new Schema({
         type: String,
         required: true,
         trim: true
+    },
+    currentOrganizationId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Organization'
     },
     profilePicture: {
         type: String,

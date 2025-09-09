@@ -23,16 +23,16 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex flex-col sm:flex-row sm:items-center sm:justify-between py-6 mb-6 border-b border-element",
+        "flex flex-col sm:flex-row sm:items-center sm:justify-between py-6 mb-6 border-b border-slate-800",
         className
       )}
     >
       <div>
-        <h1 className={cn("text-2xl font-bold text-text", titleClassName)}>
+        <h1 className={cn("text-2xl font-bold text-white", titleClassName)}>
           {title}
         </h1>
         {subtitle && (
-          <p className={cn("mt-1 text-sm text-textSecondary", subtitleClassName)}>
+          <p className={cn("mt-1 text-sm text-slate-400", subtitleClassName)}>
             {subtitle}
           </p>
         )}

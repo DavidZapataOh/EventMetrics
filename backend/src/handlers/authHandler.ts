@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import User from '../models/Users';
+import { CursorTimeoutMode } from 'mongodb';
 
 const register = async (req: any, res: any) => {
     try {
@@ -28,7 +29,7 @@ const register = async (req: any, res: any) => {
         };
 
         const token = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '24h' });
-        res.status(201).json({ token, user: { id: user._id, handle: user.handle, name: user.name, email: user.email, role: user.role, region: user.region } });
+        res.status(201).json({ token, user: { id: user._id, handle: user.handle, name: user.name, email: user.email, role: user.role, region: user.region, currentOrganizationId: user.currentOrganizationId }, organizations: [] });
     } catch (error) {
         res.status(500).json({ message: 'Error registering user' });
     }
@@ -52,7 +53,22 @@ const login = async (req: any, res: any) => {
         };
 
         const token = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '24h' });
-        res.status(200).json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+        const OrganizationMembership = require('../models/OrganizationMembership').default;
+        const Organization = require('../models/Organization').default;
+        
+        const memberships = await OrganizationMembership.find({ 
+            userId: user._id, 
+            status: 'active' 
+        }).populate('organizationId', 'name logo');
+        
+        const organizations = memberships.map((membership: any) => ({
+            ...membership.organizationId.toObject(),
+            membership: {
+                role: membership.role,
+                permissions: membership.permissions
+            }
+        }));
+        res.status(200).json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, currentOrganizationId: user.currentOrganizationId }, organizations });
     } catch (error) {
         res.status(500).json({ message: 'Error logging in' });
     }
@@ -60,11 +76,41 @@ const login = async (req: any, res: any) => {
 
 const getCurrentUser = async (req: any, res: any) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
-        res.status(200).json(user);
+        const user = req.user;
+        const OrganizationMembership = require('../models/OrganizationMembership').default;
+        const Organization = require('../models/Organization').default;
+        
+        const memberships = await OrganizationMembership.find({ 
+            userId: user._id, 
+            status: 'active' 
+        }).populate('organizationId', 'name logo website');
+        
+        const organizations = memberships.map((membership: any) => ({
+            ...membership.organizationId.toObject(),
+            membership: {
+                role: membership.role,
+                permissions: membership.permissions
+            }
+        }));
+        
+        let currentOrganization = null;
+        if (user.currentOrganizationId) {
+            const currentMembership = memberships.find((m: any) => 
+                m.organizationId._id.toString() === user.currentOrganizationId.toString()
+            );
+            currentOrganization = currentMembership || null;
+        }
+        
+        res.json({
+            ...user.toObject(),
+            password: undefined,
+            organizations,
+            currentOrganization
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching current user' });
+        console.error('Error getting current user:', error);
+        res.status(500).json({ message: 'Error getting user information' });
     }
-}
+};
 
 export { register, login, getCurrentUser };

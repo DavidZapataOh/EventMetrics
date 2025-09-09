@@ -25,7 +25,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'event-metrics-auth',
-      partialize: (state: AuthState) => ({ token: state.token }),
+      partialize: (state: AuthState) => ({ token: state.token, user: state.user }),
     }
   )
 );

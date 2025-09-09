@@ -13,6 +13,8 @@ import analyticsRoutes from './routes/api/analytics'
 import web3Routes from './routes/api/web3'
 import walletsRoutes from './routes/api/wallets'
 import importRoutes from './routes/api/import'
+import organizationRoutes from './routes/api/organization'
+import telegramRoutes from './routes/api/telegram'
 
 configureSecurityMiddleware(app)
 
@@ -50,6 +52,8 @@ const initializeServer = async () => {
         app.use('/api/web3', web3Routes)
         app.use('/api/wallets', walletsRoutes)
         app.use('/api/import', importRoutes)
+        app.use('/api/organization', organizationRoutes)
+        app.use('/api/telegram', telegramRoutes)
     } catch (error) {
         console.log(error)
         process.exit(1)

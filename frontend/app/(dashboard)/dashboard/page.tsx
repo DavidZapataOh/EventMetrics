@@ -20,10 +20,6 @@ export default function DashboardPage() {
   });
   const { overallMetricsQuery } = useAnalytics();
 
-  console.log("Estado de carga:", eventsQuery.isLoading);
-  console.log("Estado de error:", eventsQuery.isError);
-  console.log("Error:", eventsQuery.error);
-
   const isLoading = eventsQuery.isLoading || overallMetricsQuery.isLoading;
 
   if (isLoading) {
@@ -36,8 +32,8 @@ export default function DashboardPage() {
 
   if (eventsQuery.isError) {
     return (
-      <div className="p-4 border border-error rounded-md">
-        <p className="text-error">Error al cargar los eventos. Intente nuevamente.</p>
+      <div className="p-4 border border-red-500 rounded-lg bg-red-500/10">
+        <p className="text-red-400">Error loading events. Please try again.</p>
       </div>
     );
   }
@@ -50,7 +46,7 @@ export default function DashboardPage() {
     eventByType: []
   };
 
-  // Calculamos las tasas de eficiencia
+  // Calculate efficiency rates
   const walletEfficiency = metrics.totalAttendees > 0 
     ? (metrics.totalNewWallets / metrics.totalAttendees * 100).toFixed(1) 
     : "0";
@@ -116,14 +112,14 @@ export default function DashboardPage() {
           title="Wallet Efficiency"
           value={`${walletEfficiency}%`}
           description="Percentage of attendees who created wallets"
-          icon={<TrendingUp className="w-5 h-5 text-primary" />}
+          icon={<TrendingUp className="w-5 h-5 text-blue-400" />}
           trend={walletTrend}
         />
         <StatsCard
           title="Event Distribution"
           value={`${metrics.eventByType.length} types`}
-          description="Tipos de eventos realizados"
-          icon={<BarChart2 className="w-5 h-5 text-secondary" />}
+          description="Types of events conducted"
+          icon={<BarChart2 className="w-5 h-5 text-blue-400" />}
         />
       </div>
       
@@ -133,7 +129,7 @@ export default function DashboardPage() {
       </div>
       
       <div>
-        <h2 className="text-xl font-semibold mb-4">Recent Events</h2>
+        <h2 className="text-xl font-semibold mb-4 text-white">Recent Events</h2>
         <EventsTable 
           events={events} 
           isLoading={eventsQuery.isLoading}

@@ -23,18 +23,18 @@ export function StatsCard({
   className,
 }: StatsCardProps) {
   return (
-    <Card className={cn("flex items-start", className)}>
+    <Card className={cn("flex items-start bg-slate-900 border-slate-800 hover:bg-slate-800 transition-colors", className)}>
       <div className="flex-1">
-        <p className="text-sm font-medium text-textSecondary">{title}</p>
-        <h3 className="text-2xl font-bold mt-1 text-text">{value}</h3>
+        <p className="text-sm font-medium text-slate-400">{title}</p>
+        <h3 className="text-2xl font-bold mt-1 text-white">{value}</h3>
         {description && (
-          <p className="text-xs text-textSecondary mt-1">{description}</p>
+          <p className="text-xs text-slate-400 mt-1">{description}</p>
         )}
         {trend && (
           <div
             className={cn(
               "flex items-center mt-2 text-xs font-medium",
-              trend.isPositive ? "text-success" : "text-error"
+              trend.isPositive ? "text-green-400" : "text-red-400"
             )}
           >
             <span
@@ -52,7 +52,7 @@ export function StatsCard({
       <div
         className={cn(
           "p-3 rounded-lg",
-          "bg-primary/10 text-primary",
+          "bg-blue-600/20 text-blue-400",
         )}
       >
         {icon}

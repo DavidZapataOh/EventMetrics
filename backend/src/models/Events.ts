@@ -4,11 +4,11 @@ interface IEvent {
     name: string
     description: string
     date: Date
-    startTime: string // Nueva: hora de inicio (HH:MM)
-    endTime: string   // Nueva: hora de fin (HH:MM)
-    timezone: string  // Nueva: zona horaria
+    startTime: string 
+    endTime: string   
+    timezone: string  
     type: string
-    location: {       // Nueva: información de ubicación
+    location: {       
         address: string
         city: string
         country: string
@@ -19,10 +19,11 @@ interface IEvent {
         placeId?: string // Google Places ID
     }
     creator: string
+    organizationId: mongoose.Types.ObjectId
     logo: {
-        key: string // Clave del archivo en S3
-        originalName: string // Nombre original del archivo
-        size: number // Tamaño en bytes
+        key: string 
+        originalName: string 
+        size: number 
         uploadedAt: Date
     }
     objectives: string[]
@@ -125,10 +126,15 @@ const eventSchema = new Schema({
         ref: 'User',
         required: true
     },
+    organizationId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Organization',
+        required: true
+    },
     logo: {
-        key: String, // Clave del archivo en S3
-        originalName: String, // Nombre original
-        size: Number, // Tamaño en bytes
+        key: String,
+        originalName: String, 
+        size: Number,
         uploadedAt: {
             type: Date,
             default: Date.now
@@ -179,11 +185,9 @@ const eventSchema = new Schema({
     }
 })
 
-// Middleware para validar ubicación según el tipo
 eventSchema.pre('save', function(next) {
     this.updatedAt = new Date();
     
-    // Si es evento virtual, remover ubicación
     if (this.type === 'virtual') {
         this.location = undefined;
     }

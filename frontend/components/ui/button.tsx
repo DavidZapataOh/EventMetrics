@@ -30,12 +30,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const variants = {
-      primary: "bg-primary hover:bg-primaryHover text-text",
-      secondary: "bg-secondary hover:bg-secondaryHover text-text",
-      accent: "bg-accent hover:bg-accentHover text-text",
-      outline: "border-2 border-primary text-primary hover:bg-primary hover:text-text",
-      ghost: "bg-transparent text-primary hover:bg-primary/10",
-      link: "bg-transparent underline text-primary hover:text-primaryHover",
+      primary: "bg-blue-600 hover:bg-blue-700 text-white",
+      secondary: "bg-purple-600 hover:bg-purple-700 text-white",
+      accent: "bg-emerald-600 hover:bg-emerald-700 text-white",
+      outline: "border-2 border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white",
+      ghost: "bg-transparent text-slate-300 hover:bg-slate-800 hover:text-white",
+      link: "bg-transparent underline text-blue-400 hover:text-blue-300",
     };
 
     const sizes = {
@@ -51,7 +51,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         ref={ref}
         className={cn(
-          "rounded font-medium transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer",
+          "rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer",
           variants[variant],
           sizes[size],
           isLoading && "opacity-70 cursor-not-allowed",
